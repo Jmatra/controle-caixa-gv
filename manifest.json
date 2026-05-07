@@ -1,0 +1,19 @@
+{
+  "name": "Controle de Caixa GV",
+  "short_name": "Caixa GV",
+  "description": "Controle financeiro diário das lojas GV e RJ",
+  "start_url": "/controle-caixa-gv/",
+  "scope": "/controle-caixa-gv/",
+  "display": "standalone",
+  "background_color": "#16181D",
+  "theme_color": "#16181D",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "https://jmatra.github.io/controle-caixa-gv/icon-120.png", "sizes": "120x120", "type": "image/png", "purpose": "any" },
+    { "src": "https://jmatra.github.io/controle-caixa-gv/icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
+    { "src": "https://jmatra.github.io/controle-caixa-gv/icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "https://jmatra.github.io/controle-caixa-gv/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "https://jmatra.github.io/controle-caixa-gv/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
