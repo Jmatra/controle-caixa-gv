@@ -200,6 +200,9 @@
   --blue-mid:   #2563EB;
   --amber:      #78350F;
   --amber-bg:   #FEF3C7;
+  --pink:       #831843;
+  --pink-bg:    #FCE7F3;
+  --pink-mid:   #DB2777;
 
   /* Accent color — Azul Royal */
   --accent:         #1D4ED8;
@@ -272,6 +275,9 @@
   --blue-mid:   #60A5FA;
   --amber:      #FCD34D;
   --amber-bg:   #2d1f00;
+  --pink:       #F9A8D4;
+  --pink-bg:    #2d0a1e;
+  --pink-mid:   #F472B6;
 
   --accent:         #7B8FFF;
   --accent-hover:   #9AABFF;
@@ -15593,7 +15599,15 @@ function renderPlanilhas() {
     const dataFmt = d.data ? d.data.split('-').reverse().join('/') : '—';
     const totalV = d.totalVendas || Object.values(d.vendas || {}).reduce((s,v)=>s+v,0);
     const totalD = d.totalDesp   || (Object.values(d.itens   || {}).reduce((s,v)=>s+v,0));
-    const lucro  = d.lucro !== undefined ? d.lucro : totalV - totalD;
+
+    // Despesas Rafaela vs. despesas da planilha (demais categorias de saída)
+    const despRafaela  = Object.entries(d.itens || {}).reduce((s, [fid, val]) => {
+      const f = forn.find(x => x.id === fid);
+      return (f && f.cat === 'rafaela') ? s + (parseFloat(val) || 0) : s;
+    }, 0);
+    const despPlanilha = totalD - despRafaela;
+    // Lucro sempre recalculado: Vendas - Despesas - Rafaela (não confia em d.lucro, que pode estar desatualizado)
+    const lucro = totalV - despPlanilha - despRafaela;
 
     // Despesas detalhadas
     const despItens = Object.entries(d.itens || {})
@@ -15645,7 +15659,9 @@ function renderPlanilhas() {
           <div style="display:flex;gap:12px;text-align:center;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px">
             <div><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--green)">Vendas</div><div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green-mid)">${fmt(totalV)}</div></div>
             <div class="divider-v"></div>
-            <div><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--red)">Despesas</div><div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:var(--red-mid)">${fmt(totalD)}</div></div>
+            <div><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--red)">Despesas</div><div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:var(--red-mid)">${fmt(despPlanilha)}</div></div>
+            <div class="divider-v"></div>
+            <div><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--pink)">Rafaela</div><div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:var(--pink-mid)">${fmt(despRafaela)}</div></div>
             <div class="divider-v"></div>
             <div><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3)">Lucro</div><div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:${lucro>=0?'var(--green-mid)':'var(--red-mid)'}">${fmt(lucro)}</div></div>
           </div>
@@ -15691,7 +15707,15 @@ function _plDiaAbrir(dataStr) {
   const diaSem    = lanc.dia || '';
   const totalV    = parseFloat(lanc.totalVendas) || Object.values(lanc.vendas || {}).reduce((s,v)=>s+parseFloat(v||0),0);
   const totalD    = parseFloat(lanc.totalDesp)   || Object.values(lanc.itens  || {}).reduce((s,v)=>s+parseFloat(v||0),0);
-  const lucro     = lanc.lucro !== undefined ? parseFloat(lanc.lucro) : totalV - totalD;
+
+  // Despesas Rafaela vs. despesas da planilha (demais categorias de saída)
+  const despRafaela  = Object.entries(lanc.itens || {}).reduce((s, [fid, val]) => {
+    const f = forn.find(x => x.id === fid);
+    return (f && f.cat === 'rafaela') ? s + (parseFloat(val) || 0) : s;
+  }, 0);
+  const despPlanilha = totalD - despRafaela;
+  // Lucro sempre recalculado: Vendas - Despesas - Rafaela (não confia em lanc.lucro, que pode estar desatualizado)
+  const lucro     = totalV - despPlanilha - despRafaela;
   const lucroPos  = lucro >= 0;
 
   // ── Nome do feriado (se houver) ──
@@ -15751,14 +15775,18 @@ function _plDiaAbrir(dataStr) {
     nomeFeriado ? `🎉 ${nomeFeriado}` : '&nbsp;';
 
   document.getElementById('pl-dia-corpo').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div style="background:var(--green-bg);border-radius:var(--radius-sm);padding:10px;text-align:center">
         <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Vendas</div>
         <div style="font-size:15px;font-weight:700;color:var(--green)">${fmt(totalV)}</div>
       </div>
       <div style="background:var(--red-bg);border-radius:var(--radius-sm);padding:10px;text-align:center">
         <div style="font-size:10px;font-weight:700;color:var(--red-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Despesas</div>
-        <div style="font-size:15px;font-weight:700;color:var(--red-mid)">${fmt(totalD)}</div>
+        <div style="font-size:15px;font-weight:700;color:var(--red-mid)">${fmt(despPlanilha)}</div>
+      </div>
+      <div style="background:var(--pink-bg);border-radius:var(--radius-sm);padding:10px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:var(--pink-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Rafaela</div>
+        <div style="font-size:15px;font-weight:700;color:var(--pink-mid)">${fmt(despRafaela)}</div>
       </div>
       <div style="background:${lucroPos?'var(--green-bg)':'var(--red-bg)'};border-radius:var(--radius-sm);padding:10px;text-align:center">
         <div style="font-size:10px;font-weight:700;color:${lucroPos?'var(--green)':'var(--red-mid)'};text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Lucro</div>
