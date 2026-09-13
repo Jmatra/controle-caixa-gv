@@ -11925,8 +11925,9 @@ function renderRelatorio() {
     s + Object.entries(d.vendas || {}).reduce((ss, [k, v]) => ss + (k !== 'restaurante' ? (parseFloat(v)||0) : 0), 0), 0);
 
   // Fornecedores (#01–#15) + Compras (#16–#33) pagos com dinheiro da loja
-  const _IDS_REL_FORN = new Set(forn.filter(f => { const n = parseInt((f.codigo||'').replace('#','')); return f.cat === 'fornecedor' && n >= 1  && n <= 15; }).map(f => f.id));
-  const _IDS_REL_COMP = new Set(forn.filter(f => { const n = parseInt((f.codigo||'').replace('#','')); return f.cat === 'compra'     && n >= 16 && n <= 33; }).map(f => f.id));
+  // Todos os itens da categoria (sem restringir por faixa de código, para não perder itens novos como #60-#68)
+  const _IDS_REL_FORN = new Set(forn.filter(f => f.cat === 'fornecedor').map(f => f.id));
+  const _IDS_REL_COMP = new Set(forn.filter(f => f.cat === 'compra').map(f => f.id));
   const totFornRel  = data.reduce((s, d) => { let soma = 0; if (d.itens) _IDS_REL_FORN.forEach(id => { soma += parseFloat(d.itens[id]) || 0; }); return s + soma; }, 0);
   const totCompRel  = data.reduce((s, d) => { let soma = 0; if (d.itens) _IDS_REL_COMP.forEach(id => { soma += parseFloat(d.itens[id]) || 0; }); return s + soma; }, 0);
 
@@ -12314,8 +12315,9 @@ function imprimirRelatorio() {
   }, 0);
 
   // Fornecedores (#01–#15) + Compras (#16–#33) = despesas pagas com dinheiro que entrou na loja
-  const _IDS_FORN_01_15 = new Set(forn.filter(f => { const n = parseInt((f.codigo||'').replace('#','')); return f.cat === 'fornecedor' && n >= 1  && n <= 15; }).map(f => f.id));
-  const _IDS_COMP_16_33 = new Set(forn.filter(f => { const n = parseInt((f.codigo||'').replace('#','')); return f.cat === 'compra'     && n >= 16 && n <= 33; }).map(f => f.id));
+  // Todos os itens da categoria (sem restringir por faixa de código, para não perder itens novos como #60-#68)
+  const _IDS_FORN_01_15 = new Set(forn.filter(f => f.cat === 'fornecedor').map(f => f.id));
+  const _IDS_COMP_16_33 = new Set(forn.filter(f => f.cat === 'compra').map(f => f.id));
   const totFornecedores = data.reduce((s, d) => {
     let soma = 0;
     if (d.itens) _IDS_FORN_01_15.forEach(id => { soma += parseFloat(d.itens[id]) || 0; });
