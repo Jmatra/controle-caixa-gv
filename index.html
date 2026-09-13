@@ -8012,11 +8012,14 @@ function salvarLancamento() {
   Object.keys(CONFIG.SALES_CHANNELS).forEach(key => {
     _totalCanais += parseFloat(document.getElementById('fv-venda-' + key)?.value) || 0;
   });
-  let _totalItensEntrada = 0, _totalItensSaida = 0;
+  let _totalItensEntrada = 0, _totalItensSaida = 0, _despRafaela = 0;
   forn.forEach(f => {
     const v = parseFloat(document.getElementById('fv-' + f.id)?.value) || 0;
     if (_CATS_ENTRADA.has(f.cat)) _totalItensEntrada += v;
-    else if (_CATS_SAIDA.has(f.cat)) _totalItensSaida += v;
+    else if (_CATS_SAIDA.has(f.cat)) {
+      _totalItensSaida += v;
+      if (f.cat === 'rafaela') _despRafaela += v;
+    }
   });
   let _totalFuncs = 0;
   (_cache.funcs || []).forEach(f => {
@@ -8025,6 +8028,7 @@ function salvarLancamento() {
   });
   const totalVendas = _totalCanais + _totalItensEntrada + _totalFuncs;
   const totalDesp   = _totalItensSaida;
+  const despRafaela = _despRafaela;
 
   // ── Verificar lançamentos duplicados ──
   const todosDados = getData();
@@ -8051,7 +8055,7 @@ function salvarLancamento() {
     return Math.abs((parseFloat(d.totalVendas) || 0) - totalVendas) < 0.01 && totalVendas > 0;
   });
   if (mesmoValor.length > 0) {
-    window._pendingLancTotais = { totalVendas, totalDesp, loja, dataFmt, diaSem };
+    window._pendingLancTotais = { totalVendas, totalDesp, despRafaela, loja, dataFmt, diaSem };
     const listaHTML = mesmoValor.slice(0, 5).map(d => {
       const [a, m, di] = d.data.split('-');
       return `<li style="padding:4px 0;border-bottom:1px solid var(--border);color:var(--text2);font-size:13px">
@@ -8068,15 +8072,17 @@ function salvarLancamento() {
   }
 
   // Sem duplicatas → abre modal de confirmação normal
-  _abrirModalConfirmLanc(totalVendas, totalDesp, loja, dataFmt, diaSem);
+  _abrirModalConfirmLanc(totalVendas, totalDesp, despRafaela, loja, dataFmt, diaSem);
 }
 
-function _abrirModalConfirmLanc(totalVendas, totalDesp, loja, dataFmt, diaSem) {
+function _abrirModalConfirmLanc(totalVendas, totalDesp, despRafaela, loja, dataFmt, diaSem) {
   const overlay = document.getElementById('modal-confirm-lanc-overlay');
   document.getElementById('modal-confirm-lanc-loja').textContent   = loja.nome;
   document.getElementById('modal-confirm-lanc-data').textContent   = `${diaSem ? diaSem + ', ' : ''}${dataFmt}`;
   document.getElementById('modal-confirm-lanc-vendas').textContent = fmt(totalVendas);
-  document.getElementById('modal-confirm-lanc-desp').textContent   = fmt(totalDesp);
+  const despPlanilha = totalDesp - (despRafaela || 0);
+  document.getElementById('modal-confirm-lanc-desp').textContent   = fmt(despPlanilha);
+  document.getElementById('modal-confirm-lanc-rafaela').textContent = fmt(despRafaela || 0);
   const lucro = totalVendas - totalDesp;
   const elLucro = document.getElementById('modal-confirm-lanc-lucro');
   elLucro.textContent = fmt(lucro);
@@ -8088,7 +8094,7 @@ function _abrirModalConfirmLanc(totalVendas, totalDesp, loja, dataFmt, diaSem) {
 function _continuarMesmoDuplicado() {
   document.getElementById('modal-duplic-overlay').classList.remove('open');
   const p = window._pendingLancTotais;
-  if (p) _abrirModalConfirmLanc(p.totalVendas, p.totalDesp, p.loja, p.dataFmt, p.diaSem);
+  if (p) _abrirModalConfirmLanc(p.totalVendas, p.totalDesp, p.despRafaela, p.loja, p.dataFmt, p.diaSem);
   window._pendingLancTotais = null;
 }
 
@@ -11471,7 +11477,8 @@ function _dashRender6Meses(all, forn) {
   }
 
   const hoje = new Date();
-  const CATS_SAIDA = new Set(['fornecedor','compra','rafaela','restaurante','outra_loja','emprestimo']);
+  const CATS_ENTRADA = new Set(['fornecedor', 'compra']);
+  const CATS_SAIDA   = new Set(['rafaela', 'restaurante', 'outra_loja', 'emprestimo']);
 
   // Montar os últimos 6 meses
   const meses = [];
@@ -11486,7 +11493,7 @@ function _dashRender6Meses(all, forn) {
 
     const fat = lancsMes.reduce((s, lanc) => {
       const canais = Object.values(lanc.vendas || {}).reduce((ss, v) => ss + (parseFloat(v) || 0), 0);
-      const itensEntrada = forn.filter(f => !CATS_SAIDA.has(f.cat))
+      const itensEntrada = forn.filter(f => CATS_ENTRADA.has(f.cat))
         .reduce((ss, f) => ss + (parseFloat(lanc.itens?.[f.id]) || 0), 0);
       const funcs = Object.values(lanc.funcItens || {})
         .reduce((ss, fi) => ss + (fi.passagem || 0) + (fi.adiantamento || 0), 0);
@@ -17560,7 +17567,7 @@ function _showStatusBar(user) {
         </div>
       </div>
       <!-- Resumo financeiro -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
         <div style="background:var(--green-bg);border:1px solid var(--green-mid);border-radius:var(--radius-sm);padding:10px;text-align:center">
           <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--green);margin-bottom:2px">Vendas</div>
           <div id="modal-confirm-lanc-vendas" style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green-mid)"></div>
@@ -17568,6 +17575,10 @@ function _showStatusBar(user) {
         <div style="background:var(--red-bg);border:1px solid var(--red-mid);border-radius:var(--radius-sm);padding:10px;text-align:center">
           <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--red);margin-bottom:2px">Despesas</div>
           <div id="modal-confirm-lanc-desp" style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--red-mid)"></div>
+        </div>
+        <div style="background:var(--pink-bg);border:1px solid var(--pink-mid);border-radius:var(--radius-sm);padding:10px;text-align:center">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:2px">Rafaela</div>
+          <div id="modal-confirm-lanc-rafaela" style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--pink-mid)"></div>
         </div>
         <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px;text-align:center">
           <div class="label-caps">Lucro</div>
