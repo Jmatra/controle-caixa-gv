@@ -3458,6 +3458,7 @@ tbody tr:hover {
           <div class="totais-bar">
             <span>Despesas: <strong id="total-dia-val2">R$ 0,00</strong></span>
             <span>Vendas: <strong id="total-venda-val2">R$ 0,00</strong></span>
+            <span>Desp. Total: <strong id="total-despTotal-val2">R$ 0,00</strong></span>
           </div>
         </div>
 
@@ -3555,6 +3556,7 @@ tbody tr:hover {
           <div class="totais-bar">
             <span>Despesas: <strong id="total-dia-val">R$ 0,00</strong></span>
             <span>Vendas: <strong id="total-venda-val">R$ 0,00</strong></span>
+            <span>Desp. Total: <strong id="total-despTotal-val">R$ 0,00</strong></span>
           </div>
         </div>
       </div>
@@ -7882,13 +7884,16 @@ function calcTotais() {
   const CATS_ENTRADA_SAIDA = new Set([...CATS_ENTRADA, ...CATS_SAIDA]);
   CATS_ENTRADA_SAIDA.forEach(c => { catTotals[c] = 0; });
 
-  let totalItensEntrada = 0, totalItensSaida = 0;
+  let totalItensEntrada = 0, totalItensSaida = 0, pagFuncionario = 0;
   getForn().forEach(f => {
     const e = document.getElementById('fv-' + f.id);
     const v = e ? parseFloat(e.value) || 0 : 0;
     if (catTotals[f.cat] !== undefined) catTotals[f.cat] += v;
     if (CATS_ENTRADA.has(f.cat)) totalItensEntrada += v;
-    else if (CATS_SAIDA.has(f.cat)) totalItensSaida += v;
+    else if (CATS_SAIDA.has(f.cat)) {
+      totalItensSaida += v;
+      if (f.id === 'r24') pagFuncionario += v; // #58 Pagamento de Funcionario
+    }
   });
 
   // Atualizar total de cada categoria
@@ -7908,13 +7913,18 @@ function calcTotais() {
 
   const entrada = totalCanais + totalItensEntrada + totalFuncs;
   const saida   = totalItensSaida;
+  const despesaTotal = totalItensEntrada + totalFuncs + pagFuncionario;
 
   document.getElementById('total-dia-val').textContent   = fmt(saida);
   document.getElementById('total-venda-val').textContent  = fmt(entrada);
+  const dtEl = document.getElementById('total-despTotal-val');
+  if (dtEl) dtEl.textContent = fmt(despesaTotal);
   const d2 = document.getElementById('total-dia-val2');
   const v2 = document.getElementById('total-venda-val2');
   if (d2) d2.textContent = fmt(saida);
   if (v2) v2.textContent = fmt(entrada);
+  const dt2El = document.getElementById('total-despTotal-val2');
+  if (dt2El) dt2El.textContent = fmt(despesaTotal);
 }
 
 /** Variável global para guardar o id do lançamento duplicado (usada pelo botão "Editar existente"). */
@@ -8012,13 +8022,14 @@ function salvarLancamento() {
   Object.keys(CONFIG.SALES_CHANNELS).forEach(key => {
     _totalCanais += parseFloat(document.getElementById('fv-venda-' + key)?.value) || 0;
   });
-  let _totalItensEntrada = 0, _totalItensSaida = 0, _despRafaela = 0;
+  let _totalItensEntrada = 0, _totalItensSaida = 0, _despRafaela = 0, _pagFuncionario = 0;
   forn.forEach(f => {
     const v = parseFloat(document.getElementById('fv-' + f.id)?.value) || 0;
     if (_CATS_ENTRADA.has(f.cat)) _totalItensEntrada += v;
     else if (_CATS_SAIDA.has(f.cat)) {
       _totalItensSaida += v;
       if (f.cat === 'rafaela') _despRafaela += v;
+      if (f.id === 'r24') _pagFuncionario += v; // #58 Pagamento de Funcionario
     }
   });
   let _totalFuncs = 0;
@@ -8029,6 +8040,8 @@ function salvarLancamento() {
   const totalVendas = _totalCanais + _totalItensEntrada + _totalFuncs;
   const totalDesp   = _totalItensSaida;
   const despRafaela = _despRafaela;
+  // Despesa total: Fornecedores + Compra (toda categoria) + Funcionários (passagem/adiantamento) + Pagamento de Funcionario (#58)
+  const despesaTotal = _totalItensEntrada + _totalFuncs + _pagFuncionario;
 
   // ── Verificar lançamentos duplicados ──
   const todosDados = getData();
@@ -8055,7 +8068,7 @@ function salvarLancamento() {
     return Math.abs((parseFloat(d.totalVendas) || 0) - totalVendas) < 0.01 && totalVendas > 0;
   });
   if (mesmoValor.length > 0) {
-    window._pendingLancTotais = { totalVendas, totalDesp, despRafaela, loja, dataFmt, diaSem };
+    window._pendingLancTotais = { totalVendas, totalDesp, despRafaela, despesaTotal, loja, dataFmt, diaSem };
     const listaHTML = mesmoValor.slice(0, 5).map(d => {
       const [a, m, di] = d.data.split('-');
       return `<li style="padding:4px 0;border-bottom:1px solid var(--border);color:var(--text2);font-size:13px">
@@ -8072,10 +8085,10 @@ function salvarLancamento() {
   }
 
   // Sem duplicatas → abre modal de confirmação normal
-  _abrirModalConfirmLanc(totalVendas, totalDesp, despRafaela, loja, dataFmt, diaSem);
+  _abrirModalConfirmLanc(totalVendas, totalDesp, despRafaela, despesaTotal, loja, dataFmt, diaSem);
 }
 
-function _abrirModalConfirmLanc(totalVendas, totalDesp, despRafaela, loja, dataFmt, diaSem) {
+function _abrirModalConfirmLanc(totalVendas, totalDesp, despRafaela, despesaTotal, loja, dataFmt, diaSem) {
   const overlay = document.getElementById('modal-confirm-lanc-overlay');
   document.getElementById('modal-confirm-lanc-loja').textContent   = loja.nome;
   document.getElementById('modal-confirm-lanc-data').textContent   = `${diaSem ? diaSem + ', ' : ''}${dataFmt}`;
@@ -8083,6 +8096,8 @@ function _abrirModalConfirmLanc(totalVendas, totalDesp, despRafaela, loja, dataF
   const despPlanilha = totalDesp - (despRafaela || 0);
   document.getElementById('modal-confirm-lanc-desp').textContent   = fmt(despPlanilha);
   document.getElementById('modal-confirm-lanc-rafaela').textContent = fmt(despRafaela || 0);
+  const elDespTotal = document.getElementById('modal-confirm-lanc-desptotal');
+  if (elDespTotal) elDespTotal.textContent = fmt(despesaTotal || 0);
   const lucro = totalVendas - totalDesp;
   const elLucro = document.getElementById('modal-confirm-lanc-lucro');
   elLucro.textContent = fmt(lucro);
@@ -8094,7 +8109,7 @@ function _abrirModalConfirmLanc(totalVendas, totalDesp, despRafaela, loja, dataF
 function _continuarMesmoDuplicado() {
   document.getElementById('modal-duplic-overlay').classList.remove('open');
   const p = window._pendingLancTotais;
-  if (p) _abrirModalConfirmLanc(p.totalVendas, p.totalDesp, p.despRafaela, p.loja, p.dataFmt, p.diaSem);
+  if (p) _abrirModalConfirmLanc(p.totalVendas, p.totalDesp, p.despRafaela, p.despesaTotal, p.loja, p.dataFmt, p.diaSem);
   window._pendingLancTotais = null;
 }
 
@@ -15617,6 +15632,10 @@ function renderPlanilhas() {
     const despPlanilha = totalD - despRafaela;
     // Lucro sempre recalculado: Vendas - Despesas - Rafaela (não confia em d.lucro, que pode estar desatualizado)
     const lucro = totalV - despPlanilha - despRafaela;
+    // Despesa total: Fornecedores + Compra + Funcionários + Pagamento de Funcionario (#58), via totalV - canais + pagFuncionario
+    const canais = Object.values(d.vendas || {}).reduce((s,v)=>s+(parseFloat(v)||0), 0);
+    const pagFuncionario = parseFloat((d.itens || {})['r24']) || 0;
+    const despesaTotal = totalV - canais + pagFuncionario;
 
     // Despesas detalhadas
     const despItens = Object.entries(d.itens || {})
@@ -15672,6 +15691,8 @@ function renderPlanilhas() {
             <div class="divider-v"></div>
             <div><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--pink)">Rafaela</div><div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:var(--pink-mid)">${fmt(despRafaela)}</div></div>
             <div class="divider-v"></div>
+            <div><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--amber)">Desp. Total</div><div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:var(--amber)">${fmt(despesaTotal)}</div></div>
+            <div class="divider-v"></div>
             <div><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3)">Lucro</div><div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:${lucro>=0?'var(--green-mid)':'var(--red-mid)'}">${fmt(lucro)}</div></div>
           </div>
           <button onclick="editarLancamento('${d.id}')"
@@ -15726,6 +15747,10 @@ function _plDiaAbrir(dataStr) {
   // Lucro sempre recalculado: Vendas - Despesas - Rafaela (não confia em lanc.lucro, que pode estar desatualizado)
   const lucro     = totalV - despPlanilha - despRafaela;
   const lucroPos  = lucro >= 0;
+  // Despesa total: Fornecedores + Compra + Funcionários + Pagamento de Funcionario (#58)
+  const canais = Object.values(lanc.vendas || {}).reduce((s,v)=>s+(parseFloat(v)||0), 0);
+  const pagFuncionario = parseFloat((lanc.itens || {})['r24']) || 0;
+  const despesaTotal = totalV - canais + pagFuncionario;
 
   // ── Nome do feriado (se houver) ──
   const _mmdd = dataStr.slice(5,7) + '-' + dataStr.slice(8,10);
@@ -15784,7 +15809,7 @@ function _plDiaAbrir(dataStr) {
     nomeFeriado ? `🎉 ${nomeFeriado}` : '&nbsp;';
 
   document.getElementById('pl-dia-corpo').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-bottom:14px">
       <div style="background:var(--green-bg);border-radius:var(--radius-sm);padding:10px;text-align:center">
         <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Vendas</div>
         <div style="font-size:15px;font-weight:700;color:var(--green)">${fmt(totalV)}</div>
@@ -15796,6 +15821,10 @@ function _plDiaAbrir(dataStr) {
       <div style="background:var(--pink-bg);border-radius:var(--radius-sm);padding:10px;text-align:center">
         <div style="font-size:10px;font-weight:700;color:var(--pink-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Rafaela</div>
         <div style="font-size:15px;font-weight:700;color:var(--pink-mid)">${fmt(despRafaela)}</div>
+      </div>
+      <div style="background:var(--amber-bg);border-radius:var(--radius-sm);padding:10px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Desp. Total</div>
+        <div style="font-size:15px;font-weight:700;color:var(--amber)">${fmt(despesaTotal)}</div>
       </div>
       <div style="background:${lucroPos?'var(--green-bg)':'var(--red-bg)'};border-radius:var(--radius-sm);padding:10px;text-align:center">
         <div style="font-size:10px;font-weight:700;color:${lucroPos?'var(--green)':'var(--red-mid)'};text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Lucro</div>
@@ -17066,9 +17095,22 @@ const ModalDias = (() => {
 
   function _renderLista(porDia, dias, labelPeriodo) {
   const el = document.getElementById('modal-dias-content');
+  const forn = getForn();
   const totalDias = dias.length;
   const totalV = dias.reduce((s, d) => s + porDia[d].reduce((ss, r) => ss + (r.totalVendas||0), 0), 0);
   const totalD = dias.reduce((s, d) => s + porDia[d].reduce((ss, r) => ss + (r.totalDesp||0), 0), 0);
+  const totalCanais = dias.reduce((s, d) => s + porDia[d].reduce((ss, r) =>
+    ss + Object.values(r.vendas || {}).reduce((sss,v)=>sss+(parseFloat(v)||0), 0), 0), 0);
+  const totalRafaela = dias.reduce((s, d) => s + porDia[d].reduce((ss, r) =>
+    ss + Object.entries(r.itens || {}).reduce((sss, [fid, val]) => {
+      const f = forn.find(x => x.id === fid);
+      return (f && f.cat === 'rafaela') ? sss + (parseFloat(val) || 0) : sss;
+    }, 0), 0), 0);
+  const despPlanilhaTotal = totalD - totalRafaela;
+  // Despesa total: Fornecedores + Compra + Funcionários + Pagamento de Funcionario (#58), agregado no período
+  const totalPagFunc = dias.reduce((s, d) => s + porDia[d].reduce((ss, r) =>
+    ss + (parseFloat((r.itens || {})['r24']) || 0), 0), 0);
+  const despesaTotalGeral = totalV - totalCanais + totalPagFunc;
 
   let linhas = dias.map(data => {
     const regs = porDia[data];
@@ -17113,14 +17155,22 @@ const ModalDias = (() => {
       </div>
       <button onclick="ModalDias.fechar()" style="background:var(--surface2);border:none;border-radius:var(--radius-sm);padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2)">✕ Fechar</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 16px;background:var(--bg)">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(85px,1fr));gap:8px;padding:14px 16px;background:var(--bg)">
       <div class="mini-card">
         <div class="label-caps">Vendas</div>
         <div class="mono-val mono-green">${fmt(totalV)}</div>
       </div>
       <div class="mini-card">
         <div class="label-caps">Despesas</div>
-        <div class="mono-val mono-red">${fmt(totalD)}</div>
+        <div class="mono-val mono-red">${fmt(despPlanilhaTotal)}</div>
+      </div>
+      <div class="mini-card">
+        <div class="label-caps" style="color:var(--pink-mid)">Rafaela</div>
+        <div class="mono-val" style="color:var(--pink-mid)">${fmt(totalRafaela)}</div>
+      </div>
+      <div class="mini-card">
+        <div class="label-caps" style="color:var(--amber)">Desp. Total</div>
+        <div class="mono-val" style="color:var(--amber)">${fmt(despesaTotalGeral)}</div>
       </div>
       <div class="mini-card">
         <div class="label-caps">Lucro</div>
@@ -17158,11 +17208,21 @@ const ModalDias = (() => {
   function _abrirDetalhes(data, regs) {
   const dataFmt = data.split('-').reverse().join('/');
   const el = document.getElementById('modal-dias-content');
+  const forn = getForn();
 
   const totalV = regs.reduce((s, r) => s + (r.totalVendas||0), 0);
   const totalD = regs.reduce((s, r) => s + (r.totalDesp||0), 0);
   const lucro  = totalV - totalD;
   const diaSem = regs[0]?.dia || '';
+  const totalCanais = regs.reduce((s, r) => s + Object.values(r.vendas || {}).reduce((ss,v)=>ss+(parseFloat(v)||0), 0), 0);
+  const despRafaela = regs.reduce((s, r) => s + Object.entries(r.itens || {}).reduce((ss, [fid, val]) => {
+    const f = forn.find(x => x.id === fid);
+    return (f && f.cat === 'rafaela') ? ss + (parseFloat(val) || 0) : ss;
+  }, 0), 0);
+  const despPlanilha = totalD - despRafaela;
+  // Despesa total: Fornecedores + Compra + Funcionários + Pagamento de Funcionario (#58)
+  const totalPagFunc = regs.reduce((s, r) => s + (parseFloat((r.itens || {})['r24']) || 0), 0);
+  const despesaTotal = totalV - totalCanais + totalPagFunc;
 
   // Montar detalhes de vendas e despesas de cada registro
   let blocos = regs.map((r, idx) => {
@@ -17227,14 +17287,22 @@ const ModalDias = (() => {
       </div>
       <button onclick="ModalDias.fechar()" class="btn-surface">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 16px;background:var(--bg)">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(85px,1fr));gap:8px;padding:14px 16px;background:var(--bg)">
       <div class="mini-card">
         <div class="label-caps">Vendas</div>
         <div class="mono-val mono-green">${fmt(totalV)}</div>
       </div>
       <div class="mini-card">
         <div class="label-caps">Despesas</div>
-        <div class="mono-val mono-red">${fmt(totalD)}</div>
+        <div class="mono-val mono-red">${fmt(despPlanilha)}</div>
+      </div>
+      <div class="mini-card">
+        <div class="label-caps" style="color:var(--pink-mid)">Rafaela</div>
+        <div class="mono-val" style="color:var(--pink-mid)">${fmt(despRafaela)}</div>
+      </div>
+      <div class="mini-card">
+        <div class="label-caps" style="color:var(--amber)">Desp. Total</div>
+        <div class="mono-val" style="color:var(--amber)">${fmt(despesaTotal)}</div>
       </div>
       <div class="mini-card">
         <div class="label-caps">Lucro</div>
@@ -17567,7 +17635,7 @@ function _showStatusBar(user) {
         </div>
       </div>
       <!-- Resumo financeiro -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(85px,1fr));gap:8px;margin-bottom:20px">
         <div style="background:var(--green-bg);border:1px solid var(--green-mid);border-radius:var(--radius-sm);padding:10px;text-align:center">
           <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--green);margin-bottom:2px">Vendas</div>
           <div id="modal-confirm-lanc-vendas" style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green-mid)"></div>
@@ -17579,6 +17647,10 @@ function _showStatusBar(user) {
         <div style="background:var(--pink-bg);border:1px solid var(--pink-mid);border-radius:var(--radius-sm);padding:10px;text-align:center">
           <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:2px">Rafaela</div>
           <div id="modal-confirm-lanc-rafaela" style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--pink-mid)"></div>
+        </div>
+        <div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:10px;text-align:center">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--amber);margin-bottom:2px">Desp. Total</div>
+          <div id="modal-confirm-lanc-desptotal" style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--amber)"></div>
         </div>
         <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px;text-align:center">
           <div class="label-caps">Lucro</div>

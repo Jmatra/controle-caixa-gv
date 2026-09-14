@@ -16,7 +16,7 @@
 // isso não é mais um problema para ele. Ainda assim, a cada atualização
 // grande, é boa prática mudar o número abaixo (ex.: v1 → v2) para
 // forçar a limpeza dos caches antigos no 'activate'.
-const CACHE_NAME = 'caixa-gv-v26';
+const CACHE_NAME = 'caixa-gv-v28';
 
 // Recursos do shell que devem ser cacheados na instalação
 const SHELL_URLS = [
