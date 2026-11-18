@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <script>try{var t=localStorage.getItem("caixa-gv-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Controle de Caixa — GV v3.9</title>
+<title>Controle de Caixa — GV v3.10</title>
 
 <!-- ============================================================
      PWA — Progressive Web App
@@ -33,7 +33,7 @@
 <!--
   ╔══════════════════════════════════════════════════════════════════════╗
   ║           CONTROLE DE CAIXA — GOVERNADOR VALADARES                  ║
-  ║           Versão: 3.9 — Rotação automática (retrato/paisagem)       ║
+  ║           Versão: 3.10 — Pronto para o APK Android (Capacitor)      ║
   ╠══════════════════════════════════════════════════════════════════════╣
   ║  HISTÓRICO DE VERSÕES                                                ║
   ║  ─────────────────────────────────────────────────────────────────  ║
@@ -44,6 +44,7 @@
   ║         · Melhoria: renderContas usa cache; seção 3.22 documentada   ║
   ║  v3.3 — Seções novas: Planilhas já lançadas (3.23), calendário       ║
   ║         visual de lançamentos com marcação de cartão                 ║
+  ║  v3.10 — APK: salvar arquivos (Salvar como) e imprimir/PDF nativos   ║
   ║  v3.9 — App gira automaticamente (orientation: any) em tablet/celular ║
   ║  v3.8 — Responsivo: menu "Mais" sem corte embaixo; filtros, abas e   ║
   ║         formulários se ajustam a qualquer largura de celular         ║
@@ -3076,7 +3077,7 @@ tbody tr:hover {
           <img src="logo.png" alt="Frutaçaí" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,0.18)">
           <div>
             <div class="logo-title">Controle de Caixa</div>
-            <div class="logo-sub">GV v3.9</div>
+            <div class="logo-sub">GV v3.10</div>
           </div>
         </div>
         <span id="status-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#4ADE80;flex-shrink:0;box-shadow:0 0 0 2px rgba(74,222,128,0.2)" title="Conectado"></span>
@@ -5080,7 +5081,7 @@ tbody tr:hover {
 <!-- Drawer: menu deslizante de baixo para cima (itens secundários) -->
 <div class="mobile-drawer" id="mobile-drawer">
   <div class="drawer-handle"></div>
-  <div class="drawer-title">Mais opções <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">· v3.9</span></div>
+  <div class="drawer-title">Mais opções <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">· v3.10</span></div>
   <!-- Seletor de lojas mobile -->
   <div id="mobile-lojas-wrap" style="display:none;margin-bottom:12px;padding:0 4px">
     <div style="font-size:10px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Loja ativa</div>
@@ -6382,10 +6383,7 @@ function imprimirFechamentoDia() {
   const iframe = document.getElementById('fc-print-iframe');
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open(); doc.write(html); doc.close();
-  document.getElementById('fc-print-btn').onclick = () => {
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-  };
+  document.getElementById('fc-print-btn').onclick = () => _caixaImprimir(iframe.contentWindow);
 }
 
 function fecharCaixaDia() {
@@ -7884,6 +7882,73 @@ function salvarEdicaoForn(id) {
   saveForn(forn);
   renderFornecedores();
   showToast('Fornecedor atualizado!');
+}
+
+/* ============================================================
+   APP ANDROID (Capacitor) — salvar arquivos e imprimir (v3.10)
+   ------------------------------------------------------------
+   O WebView do Android não trata <a download> com blob: nem iframe.print().
+   No APK, a MainActivity expõe window.AndroidFileBridge ("Salvar como") e
+   window.AndroidPrintBridge (impressão/PDF nativa). No navegador/PWA essas
+   pontes não existem e tudo funciona exatamente como antes.
+   ============================================================ */
+function _androidFileBridgeOk() {
+  const b = window.AndroidFileBridge;
+  return !!(b && typeof b.begin === 'function' && typeof b.chunk === 'function' && typeof b.finish === 'function');
+}
+function _blobParaBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = () => { const t = String(r.result || ''); resolve(t.slice(t.indexOf(',') + 1)); };
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+async function _androidSalvarBlob(blob, nome) {
+  const bridge = window.AndroidFileBridge;
+  const PARTE = 3 * 256 * 1024; // múltiplo de 3: cada parte vira base64 sem preenchimento
+  try {
+    if (!bridge.begin(String(nome || 'arquivo'), String(blob.type || 'application/octet-stream'))) return false;
+    for (let off = 0; off < blob.size; off += PARTE) {
+      const b64 = await _blobParaBase64(blob.slice(off, off + PARTE));
+      if (!bridge.chunk(b64)) { try { bridge.cancel(); } catch (_) {} return false; }
+    }
+    return !!bridge.finish();
+  } catch (err) {
+    console.error('Falha ao salvar arquivo pela ponte Android.', err);
+    try { bridge.cancel(); } catch (_) {}
+    return false;
+  }
+}
+// Intercepta o clique em <a download href="blob:..."> (backup JSON, CSVs) só quando roda no APK.
+(function () {
+  const cliqueOriginal = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function () {
+    try {
+      if (_androidFileBridgeOk() && this.download && /^blob:/i.test(this.href)) {
+        const nome = this.download;
+        fetch(this.href).then(r => r.blob()).then(b => _androidSalvarBlob(b, nome)).then(ok => {
+          if (!ok) alert('Não foi possível salvar o arquivo neste aparelho. Tente novamente.');
+        }).catch(() => alert('Não foi possível salvar o arquivo neste aparelho. Tente novamente.'));
+        return;
+      }
+    } catch (e) { console.error(e); }
+    return cliqueOriginal.apply(this, arguments);
+  };
+})();
+
+/** Imprime/gera PDF do conteúdo de uma janela/iframe (APK: diálogo nativo do Android; navegador: print normal). */
+function _caixaImprimir(win, orientacao) {
+  try {
+    const b = window.AndroidPrintBridge;
+    if (b && typeof b.printHtml === 'function') {
+      const doc = win.document;
+      b.printHtml('<!DOCTYPE html>' + doc.documentElement.outerHTML, doc.title || 'Controle de Caixa GV', orientacao || 'portrait');
+      return;
+    }
+  } catch (e) { console.error('Impressão nativa indisponível, usando a do navegador.', e); }
+  try { win.focus(); } catch (_) {}
+  win.print();
 }
 
 /* ============================================================
@@ -12778,7 +12843,7 @@ function imprimirCmv() {
   </body></html>`);
   doc.close();
 
-  document.getElementById('rel-print-btn').onclick = () => iframe.contentWindow.print();
+  document.getElementById('rel-print-btn').onclick = () => _caixaImprimir(iframe.contentWindow);
 }
 
 function imprimirRelatorio() {
@@ -13238,10 +13303,7 @@ function imprimirRelatorio() {
   iDoc.close();
 
   // Botão de impressão aciona o print do iframe, não do app principal
-  document.getElementById('rel-print-btn').onclick = () => {
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-  };
+  document.getElementById('rel-print-btn').onclick = () => _caixaImprimir(iframe.contentWindow);
 }
 
 /* ============================================================
@@ -16695,7 +16757,17 @@ function _cartImprimir() {
   }).join('');
 
   // Abre em nova aba
-  const novaAba = window.open('', '_blank');
+  // No APK (WebView) não existe "nova aba": usa um iframe oculto e o diálogo de impressão nativo.
+  const _noAndroid = !!(window.AndroidPrintBridge && typeof window.AndroidPrintBridge.printHtml === 'function');
+  let _frameImp = null, novaAba;
+  if (_noAndroid) {
+    _frameImp = document.createElement('iframe');
+    _frameImp.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;height:900px;border:0';
+    document.body.appendChild(_frameImp);
+    novaAba = _frameImp.contentWindow;
+  } else {
+    novaAba = window.open('', '_blank');
+  }
   if (!novaAba) { showToast('Permita popups para abrir o PDF.', false); return; }
   const iDoc = novaAba.document;
   iDoc.open();
@@ -16852,8 +16924,15 @@ function _cartImprimir() {
   iDoc.close();
 
   // Dispara o print automaticamente após carregar
-  novaAba.onload = () => novaAba.print();
-  setTimeout(() => { try { novaAba.print(); } catch(e) {} }, 600);
+  if (_noAndroid) {
+    setTimeout(() => {
+      _caixaImprimir(novaAba);
+      setTimeout(() => { try { _frameImp.remove(); } catch (_) {} }, 60000);
+    }, 300);
+  } else {
+    novaAba.onload = () => novaAba.print();
+    setTimeout(() => { try { novaAba.print(); } catch(e) {} }, 600);
+  }
 }
 
 /* ============================================================
