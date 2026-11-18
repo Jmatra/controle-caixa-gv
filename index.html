@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <script>try{var t=localStorage.getItem("caixa-gv-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Controle de Caixa — GV v3.6</title>
+<title>Controle de Caixa — GV v3.7</title>
 
 <!-- ============================================================
      PWA — Progressive Web App
@@ -33,7 +33,7 @@
 <!--
   ╔══════════════════════════════════════════════════════════════════════╗
   ║           CONTROLE DE CAIXA — GOVERNADOR VALADARES                  ║
-  ║           Versão: 3.6 — Melhorias de uso e relatórios               ║
+  ║           Versão: 3.7 — Logo Frutaçaí no sistema                    ║
   ╠══════════════════════════════════════════════════════════════════════╣
   ║  HISTÓRICO DE VERSÕES                                                ║
   ║  ─────────────────────────────────────────────────────────────────  ║
@@ -44,6 +44,7 @@
   ║         · Melhoria: renderContas usa cache; seção 3.22 documentada   ║
   ║  v3.3 — Seções novas: Planilhas já lançadas (3.23), calendário       ║
   ║         visual de lançamentos com marcação de cartão                 ║
+  ║  v3.7 — Logo Frutaçaí (logo.png) na tela de login e na sidebar       ║
   ║  v3.6 — Melhorias:                                                   ║
   ║         · Dashboard: filtro "Por dia" (‹ dia anterior / próximo ›    ║
   ║           / Hoje) com o dia da semana no título                      ║
@@ -2949,6 +2950,10 @@ tbody tr:hover {
   #dash-loja-nome { display: block; margin-left: 0 !important; margin-top: 2px; }
 }
 
+/* Logo na sidebar (v3.7): esconde o ícone antigo e alinha o subtítulo */
+.logo-title::before { display: none !important; }
+.logo-sub { padding-left: 0 !important; margin-top: 2px !important; }
+
 /* Categorias editáveis: botões Renomear / Excluir (v3.6) */
 .cat-acoes { display:inline-flex; gap:6px; flex-shrink:0; }
 .cat-acoes button, .cat-restaurar {
@@ -3020,7 +3025,8 @@ tbody tr:hover {
 <!-- ══ 2.1 HTML — TELA DE LOGIN ══ -->
 <div id="login-screen" style="display:none;position:fixed;inset:0;background:#F5F4F0;z-index:9998;align-items:center;justify-content:center;padding:1.25rem">
   <div style="background:#fff;border:1.5px solid #E0DBD3;border-radius:16px;padding:2.25rem 2rem;max-width:400px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.08)">
-    <div style="margin-bottom:1.75rem">
+    <div style="margin-bottom:1.75rem;text-align:center">
+      <img src="logo.png" alt="Frutaçaí" style="width:132px;height:132px;border-radius:50%;display:block;margin:0 auto 1rem">
       <div style="font-size:22px;font-weight:700;letter-spacing:-0.4px;color:#18170F;margin-bottom:4px">Controle de Caixa</div>
       <div style="font-size:13px;color:#6B6760;font-family:'DM Mono',monospace">Acesse sua conta</div>
     </div>
@@ -3063,12 +3069,10 @@ tbody tr:hover {
     <div class="logo">
       <div style="display:flex;align-items:center;gap:9px;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:9px">
-          <div style="width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
+          <img src="logo.png" alt="Frutaçaí" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,0.18)">
           <div>
             <div class="logo-title">Controle de Caixa</div>
-            <div class="logo-sub">GV v3.6</div>
+            <div class="logo-sub">GV v3.7</div>
           </div>
         </div>
         <span id="status-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#4ADE80;flex-shrink:0;box-shadow:0 0 0 2px rgba(74,222,128,0.2)" title="Conectado"></span>
