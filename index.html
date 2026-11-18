@@ -19679,6 +19679,19 @@ img, svg, canvas, video { max-width: 100%; }
   .inline-form .form-group input, .inline-form .form-group select { width: 100% !important; }
   .inline-form > .btn, .inline-form > button, .inline-form .form-actions .btn { width: 100%; align-self: stretch; }
 
+  /* Grupos de botões com largura fixa/nowrap (ex.: Cartões): quebram de linha e ocupam a largura */
+  .section div[style*="flex-shrink:0"][style*="display:flex"] { flex-shrink: 1 !important; flex-wrap: wrap; width: 100%; }
+  .section div[style*="flex-shrink:0"][style*="display:flex"] > .btn { flex: 1 1 130px; justify-content: center; }
+  .section .btn[style*="nowrap"] { white-space: normal !important; height: auto !important; min-height: 38px; }
+
+  /* Larguras mínimas fixas em blocos (ex.: avisos 220px) não podem passar da tela */
+  .section div[style*="min-width"] { min-width: 0 !important; }
+
+  /* Barra de navegação do topo: rótulos nunca se sobrepõem */
+  .bottom-nav-item { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: clamp(7.5px, 2.7vw, 10px) !important; }
+  /* Campos soltos em linhas flex (ex.: Cartões): dividem a largura em vez de encolher */
+  .section div[style*="display:flex"][style*="flex-wrap:wrap"] > .form-group { flex: 1 1 120px; }
+
   /* ── Textos longos quebram em vez de estourar ── */
   .card, .supplier-card, .metric-card, td, th, .page-sub { overflow-wrap: anywhere; }
   .supplier-actions { flex-wrap: wrap; }
@@ -19689,6 +19702,10 @@ img, svg, canvas, video { max-width: 100%; }
 
 @media (max-width: 370px) {
   #sec-dashboard .page-header > div:nth-child(2) > #theme-toggle { flex: 1 1 100%; justify-content: center; }
+}
+
+@media (max-width: 270px) {
+  .bottom-nav-item { font-size: 0 !important; }   /* só os ícones, sem texto */
 }
 
 /* Telas muito pequenas */
