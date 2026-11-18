@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <script>try{var t=localStorage.getItem("caixa-gv-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Controle de Caixa — GV v3.7</title>
+<title>Controle de Caixa — GV v3.8</title>
 
 <!-- ============================================================
      PWA — Progressive Web App
@@ -33,7 +33,7 @@
 <!--
   ╔══════════════════════════════════════════════════════════════════════╗
   ║           CONTROLE DE CAIXA — GOVERNADOR VALADARES                  ║
-  ║           Versão: 3.7 — Logo Frutaçaí no sistema                    ║
+  ║           Versão: 3.8 — Layout responsivo para celular              ║
   ╠══════════════════════════════════════════════════════════════════════╣
   ║  HISTÓRICO DE VERSÕES                                                ║
   ║  ─────────────────────────────────────────────────────────────────  ║
@@ -44,6 +44,8 @@
   ║         · Melhoria: renderContas usa cache; seção 3.22 documentada   ║
   ║  v3.3 — Seções novas: Planilhas já lançadas (3.23), calendário       ║
   ║         visual de lançamentos com marcação de cartão                 ║
+  ║  v3.8 — Responsivo: menu "Mais" sem corte embaixo; filtros, abas e   ║
+  ║         formulários se ajustam a qualquer largura de celular         ║
   ║  v3.7 — Logo Frutaçaí: login, sidebar, ícone da aba e do app (icon-*) ║
   ║  v3.6 — Melhorias:                                                   ║
   ║         · Dashboard: filtro "Por dia" (‹ dia anterior / próximo ›    ║
@@ -3073,7 +3075,7 @@ tbody tr:hover {
           <img src="logo.png" alt="Frutaçaí" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,0.18)">
           <div>
             <div class="logo-title">Controle de Caixa</div>
-            <div class="logo-sub">GV v3.7</div>
+            <div class="logo-sub">GV v3.8</div>
           </div>
         </div>
         <span id="status-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#4ADE80;flex-shrink:0;box-shadow:0 0 0 2px rgba(74,222,128,0.2)" title="Conectado"></span>
@@ -19581,6 +19583,121 @@ mark.busca-hl { background: #FEF9C3; color: #78350F; border-radius: 2px; padding
   } catch(e) {}
 })();
 </script>
+
+<!-- ============================================================
+     v3.8 — RESPONSIVIDADE (celulares de qualquer tamanho)
+     Fica por último de propósito: ajusta o layout sem mexer nos dados.
+     ============================================================ -->
+<style id="resp-v38">
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+img, svg, canvas, video { max-width: 100%; }
+.main, .section, .card, .page-header > *, .form-group, .metric-card, .supplier-card { min-width: 0; }
+
+@media (max-width: 600px) {
+  body { overflow-x: hidden; }
+
+  /* ── Menu "Mais opções": totalmente escondido quando fechado, sem cortar embaixo ── */
+  .mobile-drawer {
+    bottom: 0 !important;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
+    transform: translateY(calc(100% + 48px)) !important;
+    visibility: hidden;
+    pointer-events: none;
+    max-height: calc(100vh - 90px - env(safe-area-inset-top, 0px));
+    max-height: calc(100dvh - 90px - env(safe-area-inset-top, 0px));
+    overflow-y: auto; overscroll-behavior: contain;
+    transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s linear .3s !important;
+  }
+  .mobile-drawer.open {
+    transform: translateY(0) !important;
+    visibility: visible; pointer-events: auto;
+    transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s !important;
+  }
+  .drawer-grid { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)) !important; gap: 8px !important; }
+  .drawer-item { min-width: 0; overflow-wrap: anywhere; }
+
+  /* ── Grades: colunas que podem encolher (nada estoura a tela) ── */
+  .form-grid, .supplier-grid, .metrics-grid, .gastos-resumo-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)) !important;
+    gap: 10px;
+  }
+  .form-grid > *, .supplier-grid > *, .metrics-grid > *, .gastos-resumo-grid > * { min-width: 0; }
+  .form-group.minw-180, .form-group.minw-200 { min-width: 0 !important; grid-column: 1 / -1; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; max-width: 100%; min-width: 0; }
+
+  /* ── Filtros (Histórico, Gastos, Relatórios...): 2 por linha, busca/botões em linha inteira ── */
+  .filter-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px; align-items: end;
+  }
+  .filter-row > * { min-width: 0 !important; }
+  .filter-row .form-group { min-width: 0 !important; width: 100%; }
+  .filter-row .form-group input,
+  .filter-row .form-group select { width: 100% !important; max-width: 100%; min-width: 0; }
+  .filter-row > :first-child,
+  .filter-row > [style*="flex:1"],
+  .filter-row > .btn, .filter-row > button,
+  .filter-row > div[id$="filtro-periodo"] { grid-column: 1 / -1; }
+  .filter-row > div[id$="filtro-periodo"] > .form-group { flex: 1 1 0; }
+  .filter-row .self-end > label[style*="opacity:0"] { display: none; }
+
+  /* ── Cabeçalho das páginas (título + controles) ── */
+  .page-header { flex-direction: column; align-items: stretch !important; gap: 10px; }
+  .page-header > div:last-child { width: 100%; }
+  .page-header > div[style*="display:flex"] { flex-wrap: wrap; gap: 8px; }
+  .page-header .input-sm, .page-header select { flex: 1 1 110px; min-width: 0; }
+  .page-header > div > div[style*="border-radius"][style*="overflow:hidden"] { width: 100%; }
+  .page-header > div > div[style*="overflow:hidden"] > button { flex: 1 1 0; min-width: 0; padding: 8px 4px; font-size: 11.5px; white-space: nowrap; }
+  #dash-filtro-mes, #dash-filtro-ano, #dash-filtro-periodo, #dash-filtro-dia { width: 100%; }
+  #dash-filtro-mes > *, #dash-filtro-ano > *, #dash-filtro-periodo > *, #dash-filtro-dia > .input-sm { flex: 1 1 0; min-width: 0; }
+
+  /* Dashboard: controles quebram em linhas (em vez de uma faixa única com rolagem) */
+  #sec-dashboard .page-header > div:nth-child(2) {
+    flex-wrap: wrap !important; overflow: visible !important; gap: 8px !important; align-items: stretch !important;
+  }
+  #sec-dashboard .page-header > div:nth-child(2) > #theme-toggle { order: 1; flex: 0 0 auto; }
+  #sec-dashboard .page-header > div:nth-child(2) > [id^="dash-filtro-"] { order: 2; flex: 1 1 150px; min-width: 0; }
+  #sec-dashboard .page-header > div:nth-child(2) > div[style*="overflow:hidden"] { order: 3; flex: 1 1 100%; width: 100%; }
+  #sec-dashboard .page-header > div:nth-child(2) > div[style*="overflow:hidden"] > button {
+    flex: 1 1 0; min-width: 0; white-space: normal; line-height: 1.15; font-size: 11px; padding: 8px 3px;
+  }
+
+  /* Títulos de cartão com legenda/botões ao lado: quebram para a linha de baixo */
+  .card-title { flex-wrap: wrap; gap: 6px 12px; }
+  .card-title > div { white-space: nowrap; }
+  /* Grades inline com largura mínima grande (300px+) viram 1 coluna */
+  div[style*="minmax(300px"], div[style*="minmax(320px"], div[style*="minmax(340px"], div[style*="minmax(360px"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  /* Formulários em linha (ex.: Adicionar fornecedor): campos e botão ocupam a largura toda */
+  .inline-form { align-items: stretch !important; }
+  .inline-form .form-group { width: 100%; max-width: none !important; min-width: 0 !important; flex: 1 1 auto; }
+  .inline-form > .self-end { align-self: stretch !important; width: 100%; }
+  .inline-form > .self-end > .btn { width: 100%; }
+  .inline-form .form-group input, .inline-form .form-group select { width: 100% !important; }
+  .inline-form > .btn, .inline-form > button, .inline-form .form-actions .btn { width: 100%; align-self: stretch; }
+
+  /* ── Textos longos quebram em vez de estourar ── */
+  .card, .supplier-card, .metric-card, td, th, .page-sub { overflow-wrap: anywhere; }
+  .supplier-actions { flex-wrap: wrap; }
+  .supplier-actions > * { min-width: 0; }
+  .btn { max-width: 100%; }
+  .modal-box { width: calc(100vw - 24px) !important; max-width: 440px; }
+}
+
+@media (max-width: 370px) {
+  #sec-dashboard .page-header > div:nth-child(2) > #theme-toggle { flex: 1 1 100%; justify-content: center; }
+}
+
+/* Telas muito pequenas */
+@media (max-width: 340px) {
+  .form-grid, .supplier-grid, .metrics-grid, .gastos-resumo-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .filter-row { grid-template-columns: minmax(0, 1fr); }
+  .drawer-grid { grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important; }
+}
+</style>
 
 </body>
 </html>
