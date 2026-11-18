@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <script>try{var t=localStorage.getItem("caixa-gv-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Controle de Caixa — GV v3.8</title>
+<title>Controle de Caixa — GV v3.9</title>
 
 <!-- ============================================================
      PWA — Progressive Web App
@@ -33,7 +33,7 @@
 <!--
   ╔══════════════════════════════════════════════════════════════════════╗
   ║           CONTROLE DE CAIXA — GOVERNADOR VALADARES                  ║
-  ║           Versão: 3.8 — Layout responsivo para celular              ║
+  ║           Versão: 3.9 — Rotação automática (retrato/paisagem)       ║
   ╠══════════════════════════════════════════════════════════════════════╣
   ║  HISTÓRICO DE VERSÕES                                                ║
   ║  ─────────────────────────────────────────────────────────────────  ║
@@ -44,6 +44,7 @@
   ║         · Melhoria: renderContas usa cache; seção 3.22 documentada   ║
   ║  v3.3 — Seções novas: Planilhas já lançadas (3.23), calendário       ║
   ║         visual de lançamentos com marcação de cartão                 ║
+  ║  v3.9 — App gira automaticamente (orientation: any) em tablet/celular ║
   ║  v3.8 — Responsivo: menu "Mais" sem corte embaixo; filtros, abas e   ║
   ║         formulários se ajustam a qualquer largura de celular         ║
   ║  v3.7 — Logo Frutaçaí: login, sidebar, ícone da aba e do app (icon-*) ║
@@ -3075,7 +3076,7 @@ tbody tr:hover {
           <img src="logo.png" alt="Frutaçaí" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,0.18)">
           <div>
             <div class="logo-title">Controle de Caixa</div>
-            <div class="logo-sub">GV v3.8</div>
+            <div class="logo-sub">GV v3.9</div>
           </div>
         </div>
         <span id="status-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#4ADE80;flex-shrink:0;box-shadow:0 0 0 2px rgba(74,222,128,0.2)" title="Conectado"></span>
@@ -5079,7 +5080,7 @@ tbody tr:hover {
 <!-- Drawer: menu deslizante de baixo para cima (itens secundários) -->
 <div class="mobile-drawer" id="mobile-drawer">
   <div class="drawer-handle"></div>
-  <div class="drawer-title">Mais opções <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">· v3.8</span></div>
+  <div class="drawer-title">Mais opções <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">· v3.9</span></div>
   <!-- Seletor de lojas mobile -->
   <div id="mobile-lojas-wrap" style="display:none;margin-bottom:12px;padding:0 4px">
     <div style="font-size:10px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Loja ativa</div>
@@ -18424,7 +18425,7 @@ function _showStatusBar(user) {
       description:      'Controle financeiro diário das lojas GV e RJ',
       start_url:        './',
       display:          'standalone',
-      orientation:      'portrait-primary',
+      orientation:      'any', // gira junto com o aparelho (retrato e paisagem)
       background_color: '#16181D',
       theme_color:      '#16181D',
       lang:             'pt-BR',
