@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <script>try{var t=localStorage.getItem("caixa-gv-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Controle de Caixa — GV v3.5</title>
+<title>Controle de Caixa — GV v3.6</title>
 
 <!-- ============================================================
      PWA — Progressive Web App
@@ -18,6 +18,7 @@
 <link id="pwa-apple-icon-180" rel="apple-touch-icon" sizes="180x180">
 <link id="pwa-apple-icon-152" rel="apple-touch-icon" sizes="152x152">
 <link id="pwa-apple-icon-120" rel="apple-touch-icon" sizes="120x120">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link id="pwa-manifest" rel="manifest" href="manifest.json">
 <meta name="msapplication-TileColor" content="#16181D">
 <meta name="application-name" content="Caixa GV">
@@ -32,7 +33,7 @@
 <!--
   ╔══════════════════════════════════════════════════════════════════════╗
   ║           CONTROLE DE CAIXA — GOVERNADOR VALADARES                  ║
-  ║           Versão: 3.5 — Detecção de modo offline                    ║
+  ║           Versão: 3.6 — Melhorias de uso e relatórios               ║
   ╠══════════════════════════════════════════════════════════════════════╣
   ║  HISTÓRICO DE VERSÕES                                                ║
   ║  ─────────────────────────────────────────────────────────────────  ║
@@ -43,6 +44,15 @@
   ║         · Melhoria: renderContas usa cache; seção 3.22 documentada   ║
   ║  v3.3 — Seções novas: Planilhas já lançadas (3.23), calendário       ║
   ║         visual de lançamentos com marcação de cartão                 ║
+  ║  v3.6 — Melhorias:                                                   ║
+  ║         · Dashboard: filtro "Por dia" (‹ dia anterior / próximo ›    ║
+  ║           / Hoje) com o dia da semana no título                      ║
+  ║         · Fechamento de Caixa: botão Imprimir / PDF (relatório do    ║
+  ║           dia) e resumo em cartões alinhados                         ║
+  ║         · Botão Sair movido para o rodapé da sidebar                 ║
+  ║         · Categorias de fornecedor: renomear e excluir (ocultar)     ║
+  ║           categoria vazia, com restaurar (somente administradores)   ║
+  ║         · Configurações: card "Instalar aplicativo"; ícone da aba    ║
   ║  v3.5 — Detecção de modo offline:                                    ║
   ║         · Banner fixo no topo com animação e acessibilidade          ║
   ║         · window 'offline'/'online' + Firebase .info/connected       ║
@@ -2938,6 +2948,21 @@ tbody tr:hover {
   .page-title { font-size: 24px !important; }
   #dash-loja-nome { display: block; margin-left: 0 !important; margin-top: 2px; }
 }
+
+/* Categorias editáveis: botões Renomear / Excluir (v3.6) */
+.cat-acoes { display:inline-flex; gap:6px; flex-shrink:0; }
+.cat-acoes button, .cat-restaurar {
+  padding:3px 9px; border:1px solid rgba(0,0,0,.18); border-radius:6px; background:rgba(255,255,255,.65);
+  color:inherit; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; cursor:pointer; text-transform:none; letter-spacing:0;
+}
+.cat-acoes button:hover, .cat-restaurar:hover { background:#fff; }
+[data-theme="dark"] .cat-acoes button, [data-theme="dark"] .cat-restaurar { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.25); }
+
+/* Resumo do Fechamento de Caixa: 5 cartões no desktop, 2 colunas no celular (v3.6) */
+.metrics-grid.fc-resumo-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 12px; }
+@media (max-width: 1100px) { .metrics-grid.fc-resumo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+@media (max-width: 640px)  { .metrics-grid.fc-resumo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px; }
+  .metrics-grid.fc-resumo-grid .metric-card:first-child { grid-column: 1 / -1; } }
 </style>
 
 </head>
@@ -3043,13 +3068,11 @@ tbody tr:hover {
           </div>
           <div>
             <div class="logo-title">Controle de Caixa</div>
-            <div class="logo-sub">GV v3.4</div>
+            <div class="logo-sub">GV v3.6</div>
           </div>
         </div>
         <span id="status-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#4ADE80;flex-shrink:0;box-shadow:0 0 0 2px rgba(74,222,128,0.2)" title="Conectado"></span>
       </div>
-      <!-- btn-sair: display controlado por _showStatusBar() via JS após login -->
-      <button onclick="sair()" id="btn-sair" style="display:none;margin-top:10px;background:rgba(255,255,255,0.05);border:1px solid var(--sidebar-border);border-radius:var(--radius-sm);padding:6px 10px;font-size:11px;color:var(--sidebar-text);cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;align-items:center;justify-content:center;gap:6px;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.09)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sair</button>
       <!-- Seletor de lojas na sidebar -->
       <div id="sidebar-lojas-wrap" style="display:none;margin-top:10px">
         <div id="sidebar-lojas-btns" class="d-flex-col gap-4"></div>
@@ -3141,6 +3164,11 @@ tbody tr:hover {
     <button class="nav-item" id="nav-configuracoes" style="display:none" onclick="showSection('configuracoes', this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Configurações
     </button>
+
+    <!-- btn-sair: rodapé da sidebar (abaixo de Configurações); display controlado por _showStatusBar() via JS após login -->
+    <div style="margin-top:auto;padding-top:12px">
+      <button onclick="sair()" id="btn-sair" style="display:none;margin:0 12px 14px;width:calc(100% - 24px);background:rgba(255,255,255,0.05);border:1px solid var(--sidebar-border);border-radius:var(--radius-sm);padding:6px 10px;font-size:11px;color:var(--sidebar-text);cursor:pointer;font-family:'DM Sans',sans-serif;align-items:center;justify-content:center;gap:6px;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.09)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sair</button>
+    </div>
   </aside>
 
   <!-- ---- CONTEÚDO PRINCIPAL ---- -->
@@ -3161,6 +3189,14 @@ tbody tr:hover {
             <button id="dash-modo-mes" onclick="dashSetModo('mes')" class="btn-ghost-dark">Por mês</button>
             <button id="dash-modo-ano" onclick="dashSetModo('ano')" class="btn-ghost-sm">Por ano</button>
             <button id="dash-modo-periodo" onclick="dashSetModo('periodo')" class="btn-ghost-sm">Por período</button>
+            <button id="dash-modo-dia" onclick="dashSetModo('dia')" class="btn-ghost-sm">Por dia</button>
+          </div>
+          <!-- Filtro por dia -->
+          <div id="dash-filtro-dia" style="display:none;gap:6px;align-items:center">
+            <button onclick="dashDiaMover(-1)" title="Dia anterior" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">‹</button>
+            <input type="date" id="dash-data-dia" onchange="dashDiaSync()" class="input-sm">
+            <button onclick="dashDiaMover(1)" title="Próximo dia" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">›</button>
+            <button onclick="dashDiaHoje()" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Hoje</button>
           </div>
           <!-- Seletores de mês/ano -->
           <div id="dash-filtro-mes" style="display:flex;gap:8px;align-items:center">
@@ -3329,12 +3365,12 @@ tbody tr:hover {
           <div class="form-group">
             <label>Categoria</label>
             <select id="forn-cat">
-              <option value="fornecedor">Fornecedor</option>
-              <option value="compra">Compra Diversa</option>
-              <option value="rafaela">Conta paga pela Rafaela</option>
-              <option value="restaurante">Conta do Restaurante</option>
-              <option value="outra_loja">Conta paga para Outra Loja</option>
-              <option value="emprestimo">Empréstimo para Aluguel</option>
+              <option value="fornecedor" data-cat-nome="fornecedor">Fornecedor</option>
+              <option value="compra" data-cat-nome="compra">Compra Diversa</option>
+              <option value="rafaela" data-cat-nome="rafaela">Conta paga pela Rafaela</option>
+              <option value="restaurante" data-cat-nome="restaurante">Conta do Restaurante</option>
+              <option value="outra_loja" data-cat-nome="outra_loja">Conta paga para Outra Loja</option>
+              <option value="emprestimo" data-cat-nome="emprestimo">Empréstimo para Aluguel</option>
             </select>
           </div>
           <div class="self-end">
@@ -3349,34 +3385,67 @@ tbody tr:hover {
           <span id="forn-massa-count" style="font-size:13px;font-weight:600;color:var(--blue)">0 selecionados</span>
           <span class="txt-muted txt-sm">→ mover para:</span>
           <select id="forn-massa-cat" style="padding:5px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--surface);color:var(--text)">
-            <option value="fornecedor">Fornecedor</option>
-            <option value="compra">Compra Diversa</option>
-            <option value="rafaela">Conta paga pela Rafaela</option>
-            <option value="restaurante">Conta do Restaurante</option>
-            <option value="outra_loja">Outra Loja</option>
-            <option value="emprestimo">Empréstimo para Aluguel</option>
+            <option value="fornecedor" data-cat-nome="fornecedor">Fornecedor</option>
+            <option value="compra" data-cat-nome="compra">Compra Diversa</option>
+            <option value="rafaela" data-cat-nome="rafaela">Conta paga pela Rafaela</option>
+            <option value="restaurante" data-cat-nome="restaurante">Conta do Restaurante</option>
+            <option value="outra_loja" data-cat-nome="outra_loja">Outra Loja</option>
+            <option value="emprestimo" data-cat-nome="emprestimo">Empréstimo para Aluguel</option>
           </select>
           <button onclick="moverFornSelecionados()" style="padding:5px 14px;background:var(--blue-mid);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500">Mover</button>
           <button onclick="limparSelecaoForn()" style="padding:5px 12px;background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px">Cancelar</button>
         </div>
 
-        <div class="section-sep sep-fornecedores">Fornecedores</div>
-        <div id="grid-fornecedor" class="supplier-grid"></div>
+        <!-- Categorias excluídas (com opção de restaurar) -->
+        <div id="cat-ocultas-bar" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--text2)"></div>
 
-        <div class="section-sep sep-compras mt-8">Compras Diversas</div>
-        <div id="grid-compra" class="supplier-grid"></div>
+        <div data-cat-oculta="fornecedor">
+          <div class="section-sep sep-fornecedores" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span data-cat-nome="fornecedor">Fornecedores</span>
+            <span class="cat-acoes admin-only-cat"><button type="button" onclick="catEditar('fornecedor')">✏️ Renomear</button><button type="button" onclick="catExcluir('fornecedor')">🗑 Excluir</button></span>
+          </div>
+          <div id="grid-fornecedor" class="supplier-grid"></div>
+        </div>
 
-        <div class="section-sep sep-rafaela mt-8">Contas Pagas pela Rafaela</div>
-        <div id="grid-rafaela" class="supplier-grid"></div>
+        <div data-cat-oculta="compra">
+          <div class="section-sep sep-compras mt-8" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span data-cat-nome="compra">Compras Diversas</span>
+            <span class="cat-acoes admin-only-cat"><button type="button" onclick="catEditar('compra')">✏️ Renomear</button><button type="button" onclick="catExcluir('compra')">🗑 Excluir</button></span>
+          </div>
+          <div id="grid-compra" class="supplier-grid"></div>
+        </div>
 
-        <div class="section-sep sep-restaurante mt-8">Contas do Restaurante</div>
-        <div id="grid-restaurante" class="supplier-grid"></div>
+        <div data-cat-oculta="rafaela">
+          <div class="section-sep sep-rafaela mt-8" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span data-cat-nome="rafaela">Contas Pagas pela Rafaela</span>
+            <span class="cat-acoes admin-only-cat"><button type="button" onclick="catEditar('rafaela')">✏️ Renomear</button><button type="button" onclick="catExcluir('rafaela')">🗑 Excluir</button></span>
+          </div>
+          <div id="grid-rafaela" class="supplier-grid"></div>
+        </div>
 
-        <div class="section-sep sep-outra-loja mt-8">Contas Pagas para Outra Loja</div>
-        <div id="grid-outra_loja" class="supplier-grid"></div>
+        <div data-cat-oculta="restaurante">
+          <div class="section-sep sep-restaurante mt-8" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span data-cat-nome="restaurante">Contas do Restaurante</span>
+            <span class="cat-acoes admin-only-cat"><button type="button" onclick="catEditar('restaurante')">✏️ Renomear</button><button type="button" onclick="catExcluir('restaurante')">🗑 Excluir</button></span>
+          </div>
+          <div id="grid-restaurante" class="supplier-grid"></div>
+        </div>
 
-        <div class="section-sep sep-emprestimo mt-8">Empréstimo para Aluguel</div>
-        <div id="grid-emprestimo" class="supplier-grid"></div>
+        <div>
+          <div class="section-sep sep-outra-loja mt-8" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span data-cat-nome="outra_loja">Contas Pagas para Outra Loja</span>
+            <span class="cat-acoes admin-only-cat"><button type="button" onclick="catEditar('outra_loja')">✏️ Renomear</button></span>
+          </div>
+          <div id="grid-outra_loja" class="supplier-grid"></div>
+        </div>
+
+        <div data-cat-oculta="emprestimo">
+          <div class="section-sep sep-emprestimo mt-8" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span data-cat-nome="emprestimo">Empréstimo para Aluguel</span>
+            <span class="cat-acoes admin-only-cat"><button type="button" onclick="catEditar('emprestimo')">✏️ Renomear</button><button type="button" onclick="catExcluir('emprestimo')">🗑 Excluir</button></span>
+          </div>
+          <div id="grid-emprestimo" class="supplier-grid"></div>
+        </div>
       </div>
     </div>
 
@@ -3463,34 +3532,44 @@ tbody tr:hover {
         </div>
 
         <!-- Fornecedores (gerado dinamicamente) -->
-        <div class="section-sep sep-fornecedores">Fornecedores</div>
+        <div data-cat-oculta="fornecedor">
+        <div class="section-sep sep-fornecedores" data-cat-nome="fornecedor">Fornecedores</div>
         <div class="form-grid" id="form-forn-grid"></div>
         <div class="cat-total-row" id="cat-total-fornecedor"></div>
+        </div>
 
         <!-- Compras diversas (gerado dinamicamente) -->
-        <div class="section-sep sep-compras">Compras Diversas</div>
+        <div data-cat-oculta="compra">
+        <div class="section-sep sep-compras" data-cat-nome="compra">Compras Diversas</div>
         <div class="form-grid" id="form-comp-grid"></div>
         <div class="cat-total-row" id="cat-total-compra"></div>
+        </div>
 
         <!-- Contas pagas pela Rafaela -->
-        <div class="section-sep sep-rafaela">Contas Pagas pela Rafaela</div>
+        <div data-cat-oculta="rafaela">
+        <div class="section-sep sep-rafaela" data-cat-nome="rafaela">Contas Pagas pela Rafaela</div>
         <div class="form-grid" id="form-rafaela-grid"></div>
         <div class="cat-total-row" id="cat-total-rafaela"></div>
+        </div>
 
         <!-- Contas do Restaurante -->
-        <div class="section-sep sep-restaurante">Contas do Restaurante</div>
+        <div data-cat-oculta="restaurante">
+        <div class="section-sep sep-restaurante" data-cat-nome="restaurante">Contas do Restaurante</div>
         <div class="form-grid" id="form-restaurante-grid"></div>
         <div class="cat-total-row" id="cat-total-restaurante"></div>
+        </div>
 
         <!-- Contas pagas para outra loja -->
-        <div class="section-sep sep-outra-loja">Contas Pagas para Outra Loja</div>
+        <div class="section-sep sep-outra-loja" data-cat-nome="outra_loja">Contas Pagas para Outra Loja</div>
         <div class="form-grid" id="form-outra-loja-grid"></div>
         <div class="cat-total-row" id="cat-total-outra_loja"></div>
 
         <!-- Empréstimo para Aluguel -->
-        <div class="section-sep sep-emprestimo">Empréstimo para Aluguel</div>
+        <div data-cat-oculta="emprestimo">
+        <div class="section-sep sep-emprestimo" data-cat-nome="emprestimo">Empréstimo para Aluguel</div>
         <div class="form-grid" id="form-emprestimo-grid"></div>
         <div class="cat-total-row" id="cat-total-emprestimo"></div>
+        </div>
 
         <!-- Funcionários -->
         <div class="section-sep sep-funcionarios" style="display:flex;align-items:center;justify-content:space-between;">
@@ -3631,12 +3710,12 @@ tbody tr:hover {
             <label>Categoria</label>
             <select id="hist-cat" onchange="renderHistorico()">
               <option value="">Todas</option>
-              <option value="fornecedor">Fornecedor</option>
-              <option value="compra">Compra</option>
-              <option value="rafaela">Rafaela</option>
-              <option value="restaurante">Restaurante</option>
-              <option value="outra_loja">Outra loja</option>
-              <option value="emprestimo">Empréstimo</option>
+              <option value="fornecedor" data-cat-nome="fornecedor">Fornecedor</option>
+              <option value="compra" data-cat-nome="compra">Compra</option>
+              <option value="rafaela" data-cat-nome="rafaela">Rafaela</option>
+              <option value="restaurante" data-cat-nome="restaurante">Restaurante</option>
+              <option value="outra_loja" data-cat-nome="outra_loja">Outra loja</option>
+              <option value="emprestimo" data-cat-nome="emprestimo">Empréstimo</option>
             </select>
           </div>
           <div class="form-group">
@@ -3726,6 +3805,7 @@ tbody tr:hover {
           </div>
           <button class="btn btn-primary" onclick="fecharCaixaDia()">🔒 Fechar caixa</button>
           <button class="btn btn-secondary" onclick="reabrirCaixaDia()">🔓 Reabrir</button>
+          <button class="btn btn-secondary" onclick="imprimirFechamentoDia()">🖨 Imprimir / PDF</button>
           <button class="btn btn-secondary" onclick="exportarBackupLoja()">⬇️ Backup JSON</button>
         </div>
       </div>
@@ -3815,12 +3895,12 @@ tbody tr:hover {
       <!-- Abas: Todos / categorias / Comparar -->
       <div class="gastos-tabs" id="gastos-tabs-bar">
         <button class="gastos-tab active"     onclick="filtrarGastosCat('todos', this)">Todos</button>
-        <button class="gastos-tab fornecedor" onclick="filtrarGastosCat('fornecedor', this)">Fornecedores</button>
-        <button class="gastos-tab compra"     onclick="filtrarGastosCat('compra', this)">Compras Diversas</button>
-        <button class="gastos-tab fornecedor" onclick="filtrarGastosCat('rafaela', this)">Rafaela</button>
-        <button class="gastos-tab compra"     onclick="filtrarGastosCat('restaurante', this)">Restaurante</button>
-        <button class="gastos-tab fornecedor" onclick="filtrarGastosCat('outra_loja', this)">Outra Loja</button>
-        <button class="gastos-tab compra"     onclick="filtrarGastosCat('emprestimo', this)">Empréstimo</button>
+        <button class="gastos-tab fornecedor" onclick="filtrarGastosCat('fornecedor', this)" data-cat-nome="fornecedor">Fornecedores</button>
+        <button class="gastos-tab compra"     onclick="filtrarGastosCat('compra', this)" data-cat-nome="compra">Compras Diversas</button>
+        <button class="gastos-tab fornecedor" onclick="filtrarGastosCat('rafaela', this)" data-cat-nome="rafaela">Rafaela</button>
+        <button class="gastos-tab compra"     onclick="filtrarGastosCat('restaurante', this)" data-cat-nome="restaurante">Restaurante</button>
+        <button class="gastos-tab fornecedor" onclick="filtrarGastosCat('outra_loja', this)" data-cat-nome="outra_loja">Outra Loja</button>
+        <button class="gastos-tab compra"     onclick="filtrarGastosCat('emprestimo', this)" data-cat-nome="emprestimo">Empréstimo</button>
         <button class="gastos-tab" id="gastos-tab-comparar" onclick="gastosAbrirComparacao(this)" style="margin-left:auto;border-left:1.5px solid var(--border2);padding-left:14px;color:var(--accent);font-weight:700">⇄ Comparar meses</button>
       </div>
 
@@ -3901,12 +3981,12 @@ tbody tr:hover {
             <label>Categoria</label>
             <select id="comp-cat" onchange="renderComparacao()" class="input-base">
               <option value="todos">Todas</option>
-              <option value="fornecedor">Fornecedores</option>
-              <option value="compra">Compras Diversas</option>
-              <option value="rafaela">Rafaela</option>
-              <option value="restaurante">Restaurante</option>
-              <option value="outra_loja">Outra Loja</option>
-              <option value="emprestimo">Empréstimo</option>
+              <option value="fornecedor" data-cat-nome="fornecedor">Fornecedores</option>
+              <option value="compra" data-cat-nome="compra">Compras Diversas</option>
+              <option value="rafaela" data-cat-nome="rafaela">Rafaela</option>
+              <option value="restaurante" data-cat-nome="restaurante">Restaurante</option>
+              <option value="outra_loja" data-cat-nome="outra_loja">Outra Loja</option>
+              <option value="emprestimo" data-cat-nome="emprestimo">Empréstimo</option>
             </select>
           </div>
           <div class="form-group" style="min-width:150px">
@@ -4419,6 +4499,15 @@ tbody tr:hover {
         <div class="card-title">Usuários cadastrados</div>
         <div id="cfg-usuarios-lista">
           <div class="empty"><div class="empty-icon">👤</div>Clique em Configurações para carregar.</div>
+        </div>
+      </div>
+
+      <!-- Instalar aplicativo -->
+      <div class="card mw-520">
+        <div class="card-title">Instalar aplicativo</div>
+        <div class="txt-hint" style="margin-bottom:10px">Instale o Controle de Caixa neste computador ou celular para abrir como um aplicativo, com ícone próprio.</div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="_pwaInstall()">📲 Instalar neste aparelho</button>
         </div>
       </div>
 
@@ -5275,6 +5364,15 @@ function initRealtimeSync() {
   });
   _listenersGlobais.push(refForn);
 
+  // Categorias de fornecedor: nomes personalizados e categorias excluídas (compartilhado)
+  const refCatCfg = _dbRef('categorias_forn');
+  refCatCfg.on('value', snap => {
+    _cache.catCfg = snap.val() || {};
+    aplicarNomesCategorias();
+    _refreshCurrentSection();
+  });
+  _listenersGlobais.push(refCatCfg);
+
   // Movimentações GV-RJ
   const refLojas = _dbRef('lojas');
   refLojas.on('value', snap => {
@@ -6010,12 +6108,32 @@ function renderFechamento() {
   const resumoEl = document.getElementById('fc-resumo');
   if (resumoEl) {
     resumoEl.innerHTML = `
-      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:0">
-        <div class="stat-card"><div class="stat-label">Loja ativa</div><div class="stat-value" style="font-size:20px">${escapeHtml(loja?.nome || '-')}</div><div class="stat-hint">${_formatarDataBR(data)}</div></div>
-        <div class="stat-card"><div class="stat-label">Lançamentos</div><div class="stat-value">${resumo.qtd}</div><div class="stat-hint">registro(s) no dia</div></div>
-        <div class="stat-card"><div class="stat-label">Vendas</div><div class="stat-value" style="color:var(--green-mid)">${fmt(resumo.totalVendas)}</div><div class="stat-hint">total de entrada</div></div>
-        <div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value" style="color:var(--red-mid)">${fmt(resumo.totalDesp)}</div><div class="stat-hint">total de saída</div></div>
-        <div class="stat-card"><div class="stat-label">Lucro</div><div class="stat-value" style="color:${resumo.lucro >= 0 ? 'var(--green-mid)' : 'var(--red-mid)'}">${fmt(resumo.lucro)}</div><div class="stat-hint">resultado do dia</div></div>
+      <div class="metrics-grid fc-resumo-grid" style="margin-bottom:0">
+        <div class="metric-card" style="border-left:3.5px solid var(--accent)">
+          <div class="metric-label">Loja ativa</div>
+          <div class="metric-value" style="font-family:'DM Sans',sans-serif;font-size:18px;white-space:normal;word-break:break-word">${escapeHtml(loja?.nome || '-')}</div>
+          <div class="txt-hint txt-xs mt4">Data: ${_formatarDataBR(data)}</div>
+        </div>
+        <div class="metric-card" style="border-left:3.5px solid var(--blue-mid)">
+          <div class="metric-label">Lançamentos</div>
+          <div class="metric-value">${resumo.qtd}</div>
+          <div class="txt-hint txt-xs mt4">${resumo.qtd === 1 ? 'registro feito no dia' : 'registros feitos no dia'}</div>
+        </div>
+        <div class="metric-card" style="border-left:3.5px solid var(--green-mid)">
+          <div class="metric-label">Vendas</div>
+          <div class="metric-value" style="color:var(--green-mid)">${fmt(resumo.totalVendas)}</div>
+          <div class="txt-hint txt-xs mt4">Total de entrada do dia</div>
+        </div>
+        <div class="metric-card" style="border-left:3.5px solid var(--red-mid)">
+          <div class="metric-label">Despesas</div>
+          <div class="metric-value" style="color:var(--red-mid)">${fmt(resumo.totalDesp)}</div>
+          <div class="txt-hint txt-xs mt4">Total de saída do dia</div>
+        </div>
+        <div class="metric-card" style="border-left:3.5px solid ${resumo.lucro >= 0 ? 'var(--green-mid)' : 'var(--red-mid)'}">
+          <div class="metric-label">Lucro</div>
+          <div class="metric-value" style="color:${resumo.lucro >= 0 ? 'var(--green-mid)' : 'var(--red-mid)'}">${fmt(resumo.lucro)}</div>
+          <div class="txt-hint txt-xs mt4">Resultado do dia</div>
+        </div>
       </div>`;
   }
 
@@ -6065,6 +6183,198 @@ function _fcSelecionarData(data) {
   const el = document.getElementById('fc-data');
   if (el) el.value = data;
   renderFechamento();
+}
+
+/**
+ * Relatório completo do dia (Fechamento de Caixa) — abre uma pré-visualização
+ * com botão "Imprimir / Salvar PDF". Usa os mesmos cálculos do resumo da tela.
+ */
+function imprimirFechamentoDia() {
+  if (!_lojaAtiva) { showToast('Selecione uma loja primeiro.', false); return; }
+  const data = _fcGarantirData();
+  const loja = getLojaAtiva ? getLojaAtiva() : null;
+  const resumo = _resumoLancamentosDia(data);
+  const fechamento = _caixaFechamento(data);
+  const fornList = getForn();
+  // IDs de lançamentos cujos pagamentos de funcionários já estão em pagamentos_func (evita contar 2x)
+  const idsPag = new Set((_cache.pagamentosFunc || []).filter(p => p._lancamentoId).map(p => String(p._lancamentoId)));
+  const E = escapeHtml;
+
+  // ── Vendas por canal ────────────────────────────────────────────
+  const nomeCanal = k => {
+    if (k === 'ifood') return 'iFood';
+    if (k === '_99food') return '99Food';
+    return String((CONFIG.SALES_CHANNELS[k] || k)).replace(/<[^>]*>/g, '').trim();
+  };
+  const vendasCanal = {};
+  let vendasImportadas = 0;
+  resumo.lista.forEach(d => {
+    const v = d.vendas || {};
+    let soma = 0;
+    Object.keys(v).forEach(k => {
+      const x = parseFloat(v[k]) || 0;
+      if (x) { vendasCanal[k] = (vendasCanal[k] || 0) + x; soma += x; }
+    });
+    if (soma === 0 && d.cartaoDinPix) vendasImportadas += parseFloat(d.cartaoDinPix) || 0;
+  });
+  const ordemCanais = Object.keys(CONFIG.SALES_CHANNELS);
+  const canaisUsados = Object.keys(vendasCanal).sort((a, b) => {
+    const ia = ordemCanais.indexOf(a), ib = ordemCanais.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+  const linhasVendas = canaisUsados.map(k => `<tr><td>${E(nomeCanal(k))}</td><td class="n">${fmt(vendasCanal[k])}</td></tr>`).join('')
+    + (vendasImportadas ? `<tr><td>Total importado (planilha)</td><td class="n">${fmt(vendasImportadas)}</td></tr>` : '');
+
+  // ── Despesas por categoria / fornecedor ─────────────────────────
+  const ordemCats = ['fornecedor', 'compra', 'rafaela', 'restaurante', 'outra_loja', 'emprestimo'];
+  const porCat = {};
+  ordemCats.forEach(c => porCat[c] = []);
+  fornList.forEach(f => {
+    if (!porCat[f.cat]) return;
+    let tot = 0;
+    resumo.lista.forEach(d => { tot += (d.itens && d.itens[f.id]) ? parseFloat(d.itens[f.id]) || 0 : 0; });
+    if (tot) porCat[f.cat].push({ nome: f.nome, valor: tot });
+  });
+  let despImportada = 0;
+  resumo.lista.forEach(d => {
+    const temItens = fornList.some(f => (d.itens && parseFloat(d.itens[f.id])) > 0);
+    if (!temItens) despImportada += (parseFloat(d.despEsq) || 0) + (parseFloat(d.despDir) || 0);
+  });
+  let blocosDesp = '';
+  ordemCats.forEach(c => {
+    const itens = porCat[c];
+    if (!itens.length) return;
+    const sub = itens.reduce((s, i) => s + i.valor, 0);
+    blocosDesp += `<tr class="cat"><td>${E(CATS_LABEL[c] || c)}</td><td class="n">${fmt(sub)}</td></tr>`
+      + itens.map(i => `<tr class="sub"><td>${E(i.nome)}</td><td class="n">${fmt(i.valor)}</td></tr>`).join('');
+  });
+  if (despImportada) blocosDesp += `<tr class="cat"><td>Despesas (total importado)</td><td class="n">${fmt(despImportada)}</td></tr>`;
+
+  // ── Funcionários (passagem / adiantamento) ──────────────────────
+  const nomeFunc = (id, fallback) => ((_cache.funcs || []).find(f => String(f.id) === String(id)) || {}).nome || fallback || id || '-';
+  const mapaFunc = {};
+  const addFunc = (id, nome, pass, adian, obs) => {
+    if (!(pass || adian)) return;
+    if (!mapaFunc[id]) mapaFunc[id] = { nome: nomeFunc(id, nome), pass: 0, adian: 0, obs: [] };
+    mapaFunc[id].pass += pass; mapaFunc[id].adian += adian;
+    if (obs) mapaFunc[id].obs.push(obs);
+  };
+  resumo.lista.forEach(d => {
+    const source = d._funcItensSource;
+    const usar = source === 'funcItens' || (!source && !idsPag.has(String(d.id)));
+    if (!usar) return;
+    Object.keys(d.funcItens || {}).forEach(fid => {
+      const fi = d.funcItens[fid];
+      addFunc(fid, fi.nome, parseFloat(fi.passagem) || 0, parseFloat(fi.adiantamento) || 0, '');
+    });
+  });
+  (_cache.pagamentosFunc || []).filter(p => p.data === data).forEach(p => {
+    if (p.tipo === 'passagem')          addFunc(p.funcId, p.funcNome, parseFloat(p.valor) || 0, 0, p.obs);
+    else if (p.tipo === 'adiantamento') addFunc(p.funcId, p.funcNome, 0, parseFloat(p.valor) || 0, p.obs);
+    else addFunc(p.funcId, p.funcNome, parseFloat(p.passagem) || 0, parseFloat(p.adiantamento) || 0, p.obs);
+  });
+  const funcs = Object.values(mapaFunc);
+  const totFunc = funcs.reduce((s, f) => s + f.pass + f.adian, 0);
+  const linhasFunc = funcs.map(f => `<tr><td>${E(f.nome)}${f.obs.length ? `<div class="obs">${E(f.obs.join(' • '))}</div>` : ''}</td>
+    <td class="n">${f.pass ? fmt(f.pass) : '-'}</td><td class="n">${f.adian ? fmt(f.adian) : '-'}</td><td class="n"><strong>${fmt(f.pass + f.adian)}</strong></td></tr>`).join('');
+
+  // ── Montagem ────────────────────────────────────────────────────
+  const [a, m, d2] = data.split('-').map(Number);
+  const diaSemana = CONFIG.DIAS_SEMANA[new Date(a, m - 1, d2).getDay()] || '';
+  const titulo = `Fechamento de Caixa — ${_formatarDataBR(data)}`;
+  const obs = (document.getElementById('fc-obs')?.value || '').trim() || (fechamento && fechamento.obs) || '';
+  const cor = resumo.lucro >= 0 ? '#15803D' : '#B91C1C';
+  const statusTxt = fechamento
+    ? `🔒 Caixa FECHADO por ${E(fechamento.fechadoPorEmail || '-')} em ${_formatarDataHoraBR(fechamento.fechadoEm)}`
+    : '🔓 Caixa ABERTO (ainda não fechado)';
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${E(titulo)}</title>
+  <style>
+    @page { size: A4; margin: 14mm; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: 'DM Sans', Arial, sans-serif; color: #111; background: #fff; margin: 0; padding: 24px; font-size: 13px; }
+    h1 { font-size: 22px; margin: 0 0 2px; }
+    .meta { color: #555; font-size: 12px; margin-bottom: 4px; }
+    .status { margin: 12px 0 16px; padding: 10px 14px; border-radius: 8px; font-weight: 700; font-size: 13px;
+              background: ${fechamento ? '#DCFCE7' : '#FEF3C7'}; border: 1px solid ${fechamento ? '#22C55E' : '#F59E0B'}; color: ${fechamento ? '#166534' : '#92400E'}; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+    .kpi { border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; }
+    .kpi .l { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #666; font-weight: 700; }
+    .kpi .v { font-size: 18px; font-weight: 800; margin-top: 4px; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; margin: 18px 0 6px; padding: 6px 10px; background: #F1F5F9; border-left: 4px solid #6378FF; }
+    table { width: 100%; border-collapse: collapse; page-break-inside: avoid; }
+    th { text-align: left; font-size: 10px; text-transform: uppercase; color: #666; padding: 5px 8px; border-bottom: 1.5px solid #ccc; }
+    td { padding: 5px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+    td.n, th.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    tr.cat td { font-weight: 700; background: #FAFAFA; }
+    tr.sub td:first-child { padding-left: 22px; color: #444; }
+    tr.total td { font-weight: 800; border-top: 2px solid #111; border-bottom: none; }
+    .obs { font-size: 11px; color: #666; margin-top: 2px; }
+    .vazio { color: #888; font-style: italic; padding: 6px 8px; }
+    .assin { display: flex; gap: 40px; margin-top: 56px; page-break-inside: avoid; }
+    .assin div { flex: 1; border-top: 1px solid #111; padding-top: 4px; text-align: center; font-size: 11px; color: #444; }
+    .rodape { margin-top: 22px; font-size: 10px; color: #888; }
+  </style></head><body>
+    <h1>${E(titulo)}</h1>
+    <div class="meta">🏪 ${E(loja?.nome || '-')}${diaSemana ? ' · ' + E(diaSemana) : ''} · ${resumo.qtd} ${resumo.qtd === 1 ? 'lançamento' : 'lançamentos'} no dia</div>
+    <div class="status">${statusTxt}${obs ? `<div style="font-weight:400;margin-top:3px">Obs.: ${E(obs)}</div>` : ''}</div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="l">Vendas</div><div class="v" style="color:#15803D">${fmt(resumo.totalVendas)}</div></div>
+      <div class="kpi"><div class="l">Despesas</div><div class="v" style="color:#B91C1C">${fmt(resumo.totalDesp)}</div></div>
+      <div class="kpi"><div class="l">Lucro</div><div class="v" style="color:${cor}">${fmt(resumo.lucro)}</div></div>
+      <div class="kpi"><div class="l">Lançamentos</div><div class="v">${resumo.qtd}</div></div>
+    </div>
+
+    <h2>Vendas por canal</h2>
+    <table><tbody>${linhasVendas || '<tr><td class="vazio">Nenhuma venda registrada.</td></tr>'}
+      <tr class="total"><td>Total de vendas</td><td class="n">${fmt(resumo.totalVendas)}</td></tr></tbody></table>
+
+    <h2>Despesas</h2>
+    <table><tbody>${blocosDesp || '<tr><td class="vazio">Nenhuma despesa de fornecedor/compra/saída registrada.</td></tr>'}</tbody></table>
+
+    <h2>Funcionários — passagens e adiantamentos</h2>
+    ${funcs.length ? `<table><thead><tr><th>Funcionário</th><th class="n">Passagem</th><th class="n">Adiantamento</th><th class="n">Total</th></tr></thead>
+      <tbody>${linhasFunc}<tr class="total"><td colspan="3">Total funcionários</td><td class="n">${fmt(totFunc)}</td></tr></tbody></table>`
+      : '<div class="vazio">Nenhum pagamento a funcionário neste dia.</div>'}
+
+    <h2>Resultado do dia</h2>
+    <table><tbody>
+      <tr><td>Vendas</td><td class="n">${fmt(resumo.totalVendas)}</td></tr>
+      <tr><td>(−) Despesas totais</td><td class="n">${fmt(resumo.totalDesp)}</td></tr>
+      <tr class="total"><td>Lucro do dia</td><td class="n" style="color:${cor}">${fmt(resumo.lucro)}</td></tr>
+    </tbody></table>
+
+    <div class="assin"><div>Responsável pelo caixa</div><div>Conferido por</div></div>
+    <div class="rodape">Gerado em ${new Date().toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' })}</div>
+  </body></html>`;
+
+  let modal = document.getElementById('fc-print-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'fc-print-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#fff;display:flex;flex-direction:column';
+    modal.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #e5e7eb;flex-shrink:0;gap:12px;flex-wrap:wrap">
+        <span id="fc-print-titulo" style="font-size:14px;font-weight:700;color:#111"></span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:12px;color:#666">Para PDF: em "Destino" escolha <strong>Salvar como PDF</strong></span>
+          <button id="fc-print-btn" style="padding:7px 18px;background:#6378FF;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700">🖨 Imprimir / Salvar PDF</button>
+          <button onclick="document.getElementById('fc-print-modal').style.display='none'" style="padding:7px 14px;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600">✕ Fechar</button>
+        </div>
+      </div>
+      <iframe id="fc-print-iframe" style="flex:1;border:none;background:#fff"></iframe>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('fc-print-titulo').textContent = titulo;
+  modal.style.display = 'flex';
+  const iframe = document.getElementById('fc-print-iframe');
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  document.getElementById('fc-print-btn').onclick = () => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+  };
 }
 
 function fecharCaixaDia() {
@@ -7565,6 +7875,143 @@ function salvarEdicaoForn(id) {
   showToast('Fornecedor atualizado!');
 }
 
+/* ============================================================
+   CATEGORIAS DE FORNECEDOR — renomear / excluir (ocultar)  (v3.6)
+   ------------------------------------------------------------
+   As categorias têm função fixa nos cálculos (ex.: fornecedor e compra
+   entram na entrada do caixa), por isso "excluir" apenas OCULTA a
+   categoria — e só se ela estiver vazia. Lançamentos antigos e relatórios
+   não são alterados. A configuração fica em caixa_gv/categorias_forn
+   (só administradores gravam). "Outra Loja" só pode ser renomeada.
+   ============================================================ */
+const CAT_PADRAO = {
+  fornecedor:  'Fornecedores',
+  compra:      'Compras Diversas',
+  rafaela:     'Contas Pagas pela Rafaela',
+  restaurante: 'Contas do Restaurante',
+  outra_loja:  'Contas Pagas para Outra Loja',
+  emprestimo:  'Empréstimo para Aluguel',
+};
+let _catLabelOrig = null;
+
+function _catCfg(cat) { return ((_cache.catCfg || {})[cat]) || {}; }
+function _catNome(cat, padrao) {
+  const n = String(_catCfg(cat).nome || '').trim();
+  return n || padrao || CAT_PADRAO[cat] || cat;
+}
+function _catOculta(cat) { return cat !== 'outra_loja' && !!_catCfg(cat).oculta; }
+
+/** Aplica nomes e visibilidade das categorias em todo o HTML marcado (data-cat-nome / data-cat-oculta). */
+function aplicarNomesCategorias() {
+  if (!_catLabelOrig) _catLabelOrig = Object.assign({}, CATS_LABEL);
+  Object.keys(_catLabelOrig).forEach(cat => {
+    const n = String(_catCfg(cat).nome || '').trim();
+    CATS_LABEL[cat] = n || _catLabelOrig[cat];
+  });
+  document.querySelectorAll('[data-cat-nome]').forEach(el => {
+    if (el.dataset.catPad === undefined) el.dataset.catPad = el.textContent;
+    const n = String(_catCfg(el.dataset.catNome).nome || '').trim();
+    el.textContent = n || el.dataset.catPad;
+  });
+  document.querySelectorAll('[data-cat-oculta]').forEach(el => {
+    el.style.display = _catOculta(el.dataset.catOculta) ? 'none' : '';
+  });
+  ['forn-cat', 'forn-massa-cat'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    Array.from(sel.options).forEach(o => { const oc = _catOculta(o.value); o.hidden = oc; o.disabled = oc; });
+    if (sel.selectedOptions[0] && sel.selectedOptions[0].disabled) {
+      const ok = Array.from(sel.options).find(o => !o.disabled);
+      if (ok) sel.value = ok.value;
+    }
+  });
+  // Botões Renomear/Excluir: só para administradores (as regras do Firebase só deixam admin gravar)
+  let _adm = false;
+  try { _adm = !!(firebase.auth().currentUser && isAdminEmail(firebase.auth().currentUser.email)); } catch (e) {}
+  document.querySelectorAll('.cat-acoes').forEach(el => { el.style.display = _adm ? 'inline-flex' : 'none'; });
+  _catRenderOcultas();
+}
+
+function _catRenderOcultas() {
+  const bar = document.getElementById('cat-ocultas-bar');
+  if (!bar) return;
+  const ocultas = Object.keys(CAT_PADRAO).filter(c => _catOculta(c));
+  if (!ocultas.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = '<span>Categorias excluídas:</span>' + ocultas.map(c =>
+    `<button type="button" class="cat-restaurar" onclick="catRestaurar('${c}')">↩ Restaurar “${escapeHtml(_catNome(c))}”</button>`).join('');
+}
+
+/** Opções do select de categoria no card do fornecedor (sem as categorias excluídas). */
+function _catOptionsHtml(sel) {
+  const lista = [['fornecedor', 'Fornecedor'], ['compra', 'Compra Diversa'], ['rafaela', 'Conta paga pela Rafaela'],
+                 ['restaurante', 'Conta do Restaurante'], ['outra_loja', 'Outra Loja'], ['emprestimo', 'Empréstimo para Aluguel']];
+  return lista.filter(([c]) => !_catOculta(c) || c === sel)
+    .map(([c, pad]) => `<option value="${c}"${sel === c ? ' selected' : ''}>${escapeHtml(_catNome(c, pad))}</option>`).join('');
+}
+
+function _catSalvar(cat, patch) {
+  if (!db) { showToast('❌ Sem conexão com o servidor. Alteração NÃO salva.', false); return; }
+  const anterior = _cache.catCfg;
+  const cfg = JSON.parse(JSON.stringify(anterior || {}));
+  const atual = Object.assign({}, cfg[cat] || {}, patch);
+  if (!String(atual.nome || '').trim()) delete atual.nome;
+  if (!atual.oculta) delete atual.oculta;
+  if (Object.keys(atual).length) cfg[cat] = atual; else delete cfg[cat];
+  _cache.catCfg = cfg;
+  aplicarNomesCategorias();
+  _refreshCurrentSection();
+  _syncIndicator('saving');
+  _dbRef('categorias_forn').set(Object.keys(cfg).length ? cfg : null)
+    .then(() => { _syncIndicator('saved'); showToast('Categoria atualizada!'); })
+    .catch(err => {
+      _cache.catCfg = anterior;
+      aplicarNomesCategorias();
+      _refreshCurrentSection();
+      _syncIndicator('error');
+      showToast(err && err.code === 'PERMISSION_DENIED'
+        ? 'Sem permissão para salvar categorias (apenas administradores).'
+        : 'Erro ao salvar categoria: ' + (err && err.message), false);
+    });
+}
+
+function catEditar(cat) {
+  const atual = String(_catCfg(cat).nome || '').trim() || CAT_PADRAO[cat];
+  showModal('Renomear categoria',
+    `<div class="txt-hint mb4">Nome da categoria</div>
+     <input id="cat-edit-nome" type="text" maxlength="40" value="${escapeAttr(atual)}" style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px">
+     <div class="txt-hint" style="margin-top:8px">O novo nome vale em todo o sistema (fornecedores, lançamentos e relatórios). Apague o texto para voltar ao nome original.</div>`,
+    [
+      { label: 'Salvar', style: 'primary', action: () => {
+          const v = (document.getElementById('cat-edit-nome')?.value || '').trim();
+          _catSalvar(cat, { nome: v === CAT_PADRAO[cat] ? '' : v });
+      }},
+      { label: 'Cancelar', style: 'secondary' }
+    ]);
+  setTimeout(() => { const i = document.getElementById('cat-edit-nome'); if (i) { i.focus(); i.select(); } }, 60);
+}
+
+function catExcluir(cat) {
+  const nome = escapeHtml(_catNome(cat));
+  const n = getForn().filter(f => f.cat === cat).length;
+  if (n > 0) {
+    showModal('Não é possível excluir',
+      `A categoria <strong>${nome}</strong> ainda tem <strong>${n}</strong> item(ns) cadastrado(s).<br><br>Mova-os para outra categoria (marque os itens e use <em>Mover para</em>) ou exclua-os antes.`,
+      [{ label: 'Entendi', style: 'primary' }]);
+    return;
+  }
+  const visiveis = Object.keys(CAT_PADRAO).filter(c => c !== 'outra_loja' && !_catOculta(c));
+  if (visiveis.length <= 1) { showToast('Mantenha pelo menos uma categoria.', false); return; }
+  showModal('Excluir categoria?',
+    `A categoria <strong>${nome}</strong> deixará de aparecer em Fornecedores e em Novo lançamento.<br><br>Lançamentos antigos e relatórios continuam intactos, e você pode restaurá-la depois.`,
+    [
+      { label: 'Excluir', style: 'danger', action: () => _catSalvar(cat, { oculta: true }) },
+      { label: 'Cancelar', style: 'secondary' }
+    ]);
+}
+
+function catRestaurar(cat) { _catSalvar(cat, { oculta: false }); }
+
 /** Renderiza os grids de fornecedores e compras. */
 function renderFornecedores() {
   const forn       = getForn();
@@ -7582,6 +8029,7 @@ function renderFornecedores() {
     { cat: 'outra_loja',  label: 'Conta paga para Outra Loja' },
     { cat: 'emprestimo',  label: 'Empréstimo para Aluguel' },
   ];
+  CATS.forEach(c => { c.label = _catNome(c.cat, c.label); });
 
   CATS.forEach(({ cat, label }) => {
     const lista = forn.filter(f => f.cat === cat);
@@ -7626,12 +8074,7 @@ function renderFornecedores() {
           <div class="txt-hint mb4">Categoria:</div>
           <select id="fcard-cat-${f.id}"
             style="width:100%;padding:7px 9px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:8px;background:var(--surface);color:var(--text)">
-            <option value="fornecedor"  ${f.cat==='fornecedor'  ? 'selected':''}>Fornecedor</option>
-            <option value="compra"      ${f.cat==='compra'      ? 'selected':''}>Compra Diversa</option>
-            <option value="rafaela"     ${f.cat==='rafaela'     ? 'selected':''}>Conta paga pela Rafaela</option>
-            <option value="restaurante" ${f.cat==='restaurante' ? 'selected':''}>Conta do Restaurante</option>
-            <option value="outra_loja"  ${f.cat==='outra_loja'  ? 'selected':''}>Outra Loja</option>
-            <option value="emprestimo"  ${f.cat==='emprestimo'  ? 'selected':''}>Empréstimo para Aluguel</option>
+            ${_catOptionsHtml(f.cat)}
           </select>
           <div class="d-flex gap-6">
             <button onclick="salvarEdicaoForn('${escapeJsString(f.id)}')" style="flex:1;padding:6px;background:var(--text);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500">Salvar</button>
@@ -7641,6 +8084,7 @@ function renderFornecedores() {
       </div>`;
     }).join('');
   });
+  aplicarNomesCategorias();
 }
 
 /* ============================================================
@@ -7690,6 +8134,7 @@ function buildLancForm() {
   buildFornGrid('restaurante', 'form-restaurante-grid');
   buildFornGrid('outra_loja',  'form-outra-loja-grid');
   buildFornGrid('emprestimo',  'form-emprestimo-grid');
+  aplicarNomesCategorias();
 
   // Funcionários da loja ativa
   buildFuncLancGrid();
@@ -8601,9 +9046,9 @@ function _renderRanking() {
 
   // Label da categoria para o cabeçalho
   const catLabels = {
-    todos: 'Todos', fornecedor: 'Fornecedores', compra: 'Compras Diversas',
-    rafaela: 'Rafaela', restaurante: 'Restaurante',
-    outra_loja: 'Outra Loja', emprestimo: 'Empréstimo',
+    todos: 'Todos', fornecedor: _catNome('fornecedor', 'Fornecedores'), compra: _catNome('compra', 'Compras Diversas'),
+    rafaela: _catNome('rafaela', 'Rafaela'), restaurante: _catNome('restaurante', 'Restaurante'),
+    outra_loja: _catNome('outra_loja', 'Outra Loja'), emprestimo: _catNome('emprestimo', 'Empréstimo'),
   };
   const catLabel = catLabels[cat] || cat;
 
@@ -10325,8 +10770,22 @@ let _dashChartInstances = [];
 // Guarda o modo ativo do dashboard de forma confiável (não depende de cor de botão)
 let _dashModo = 'mes';
 
+// "Por dia" reutiliza o modo 'periodo' (de = até = dia escolhido), então
+// todos os gráficos/totais do Dashboard funcionam sem alteração.
+let _dashDeAteDoDia = false; // true quando dash-data-de/ate foram preenchidos pelo "Por dia"
+
 function dashSetModo(modo) {
-  _dashModo = modo; // registra o modo escolhido
+  const ehDia = modo === 'dia';
+  _dashModo = ehDia ? 'periodo' : modo; // registra o modo escolhido
+  // Saindo do "Por dia": limpa as datas que ele preencheu, para não vazarem no "Por período"
+  if (!ehDia && _dashDeAteDoDia) {
+    const deEl = document.getElementById('dash-data-de'), ateEl = document.getElementById('dash-data-ate');
+    if (deEl) deEl.value = '';
+    if (ateEl) ateEl.value = '';
+    _dashDeAteDoDia = false;
+  }
+  const btnDia     = document.getElementById('dash-modo-dia');
+  const filtroDia  = document.getElementById('dash-filtro-dia');
   const btnMes     = document.getElementById('dash-modo-mes');
   const btnAno     = document.getElementById('dash-modo-ano');
   const btnPeriodo = document.getElementById('dash-modo-periodo');
@@ -10347,11 +10806,15 @@ function dashSetModo(modo) {
   _setSel(btnMes,     modo === 'mes');
   _setSel(btnAno,     modo === 'ano');
   _setSel(btnPeriodo, modo === 'periodo');
+  _setSel(btnDia,     ehDia);
 
   // Mostra o filtro do modo escolhido, esconde os outros
-  [filtroMes, filtroAno, filtroPer].forEach(f => { if(f) f.style.display='none'; });
+  [filtroDia, filtroMes, filtroAno, filtroPer].forEach(f => { if(f) f.style.display='none'; });
 
-  if (modo === 'mes') {
+  if (ehDia) {
+    if (filtroDia) filtroDia.style.display = 'flex';
+    dashDiaSync(false); // preenche com hoje (se vazio) e sincroniza de/até; o render vem no fim
+  } else if (modo === 'mes') {
     if (filtroMes) filtroMes.style.display = 'flex';
   } else if (modo === 'ano') {
     if (filtroAno) filtroAno.style.display = 'flex';
@@ -10370,6 +10833,32 @@ function dashSetModo(modo) {
     if (filtroPer) filtroPer.style.display = 'flex';
   }
   renderDashboard();
+}
+
+/** Sincroniza o dia escolhido com o intervalo de/até usado pelo modo período. */
+function dashDiaSync(render = true) {
+  const el = document.getElementById('dash-data-dia');
+  if (!el) return;
+  if (!el.value) el.value = hojeLocalISO();
+  const deEl = document.getElementById('dash-data-de'), ateEl = document.getElementById('dash-data-ate');
+  if (deEl)  deEl.value  = el.value;
+  if (ateEl) ateEl.value = el.value;
+  _dashDeAteDoDia = true;
+  if (render) renderDashboard();
+}
+function dashDiaMover(delta) {
+  const el = document.getElementById('dash-data-dia');
+  if (!el) return;
+  const [y, m, d] = (el.value || hojeLocalISO()).split('-').map(Number);
+  const dt = new Date(y, m - 1, d + delta);
+  const pad = n => String(n).padStart(2, '0');
+  el.value = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+  dashDiaSync();
+}
+function dashDiaHoje() {
+  const el = document.getElementById('dash-data-dia');
+  if (el) el.value = hojeLocalISO();
+  dashDiaSync();
 }
 
 function dashLimparPeriodo() {
@@ -10466,7 +10955,12 @@ function _dashFiltrarDados(all, modo) {
     });
     prevData = [];
     const fmtDate = s => s ? s.split('-').reverse().join('/') : '?';
-    labelPeriodo = (de && ate) ? `${fmtDate(de)} a ${fmtDate(ate)}`
+    const _diaUnico = (de && ate && de === ate) ? (() => {
+      const [yy, mm, dd] = de.split('-').map(Number);
+      return `${CONFIG.DIAS_SEMANA[new Date(yy, mm - 1, dd).getDay()] || ''}, ${fmtDate(de)}`;
+    })() : '';
+    labelPeriodo = _diaUnico ? _diaUnico
+                 : (de && ate) ? `${fmtDate(de)} a ${fmtDate(ate)}`
                  : de  ? `A partir de ${fmtDate(de)}`
                  : `Até ${fmtDate(ate)}`;
   } else if (modo === 'ano') {
@@ -11607,6 +12101,7 @@ function _relBuildCards(data, forn, mapaFunc, totFuncs) {
     { cat:'outra_loja',  title:'Contas pagas para Outra Loja' },
     { cat:'emprestimo',  title:'Empréstimo para Aluguel' },
   ];
+  CATS_REL.forEach(c => { c.title = _catNome(c.cat, c.title); });
   const catCards = CATS_REL.map(({ cat, title }) => {
     const rows = makeRows(cat);
     if (!rows) return '';
@@ -12400,6 +12895,7 @@ function imprimirRelatorio() {
     { cat: 'outra_loja',  title: 'Contas pagas para Outra Loja' },
     { cat: 'emprestimo',  title: 'Empréstimo para Aluguel' },
   ];
+  CATS_REL.forEach(c => { c.title = _catNome(c.cat, c.title); });
 
   const catCards = CATS_REL.map(({ cat, title }) => {
     const rows = forn.filter(f => f.cat === cat).map(f => {
